@@ -1,0 +1,458 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "title": "Smartphone X200",
+      "description": "Smartphone AMOLED 128 Go de stockage, double SIM.",
+      "price": 699.99,
+      "image": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.5, "count": 152 }
+    },
+    {
+      "id": 2,
+      "title": "Ordinateur portable Ultrabook",
+      "description": "Ordinateur portable léger avec processeur i7 et SSD 512 Go.",
+      "price": 1199.0,
+      "image": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.8, "count": 324 }
+    },
+    {
+      "id": 3,
+      "title": "Écouteurs sans fil Pro",
+      "description": "Écouteurs Bluetooth avec réduction active du bruit.",
+      "price": 149.99,
+      "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.3, "count": 210 }
+    },
+    {
+      "id": 4,
+      "title": "Montre connectée FitWatch",
+      "description": "Montre connectée avec suivi sportif et capteur cardiaque.",
+      "price": 199.9,
+      "image": "https://images.unsplash.com/photo-1544117519-31a4b719223d?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.6, "count": 180 }
+    },
+    {
+      "id": 5,
+      "title": "Casque de gaming Xtreme",
+      "description": "Casque audio avec micro intégré et son surround 7.1.",
+      "price": 89.9,
+      "image": "https://images.unsplash.com/photo-1599669454699-248893623440?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.4, "count": 97 }
+    },
+    {
+      "id": 6,
+      "title": "Tablette ProTab 10",
+      "description": "Tablette tactile 10 pouces avec 256 Go de mémoire.",
+      "price": 499.0,
+      "image": "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.5, "count": 130 }
+    },
+    {
+      "id": 7,
+      "title": "Appareil photo Reflex D500",
+      "description": "Appareil photo reflex 24 MP avec objectif 18-55 mm.",
+      "price": 899.0,
+      "image": "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.7, "count": 76 }
+    },
+    {
+      "id": 8,
+      "title": "Clavier mécanique RGB",
+      "description": "Clavier gamer mécanique avec rétroéclairage RGB.",
+      "price": 129.99,
+      "image": "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.6, "count": 190 }
+    },
+    {
+      "id": 9,
+      "title": "Souris gamer ultra-précise",
+      "description": "Souris optique 16000 DPI avec boutons programmables.",
+      "price": 59.9,
+      "image": "https://images.unsplash.com/photo-1527814050087-3793815479db?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.4, "count": 145 }
+    },
+    {
+      "id": 10,
+      "title": "Enceinte Bluetooth Portable",
+      "description": "Enceinte compacte avec basses puissantes et autonomie 12h.",
+      "price": 79.9,
+      "image": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop",
+      "category": "electronique",
+      "rating": { "rate": 4.3, "count": 210 }
+    },
+
+    {
+      "id": 11,
+      "title": "T-shirt en coton bio",
+      "description": "T-shirt confortable 100% coton bio.",
+      "price": 19.99,
+      "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop",
+      "category": "vetements",
+      "rating": { "rate": 4.2, "count": 87 }
+    },
+    {
+      "id": 12,
+      "title": "Jeans slim homme",
+      "description": "Jeans stretch coupe slim, bleu foncé.",
+      "price": 49.9,
+      "image": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400&h=400&fit=crop",
+      "category": "vetements",
+      "rating": { "rate": 4.4, "count": 130 }
+    },
+    {
+      "id": 13,
+      "title": "Robe d’été fleurie",
+      "description": "Robe légère avec imprimé floral, parfaite pour l’été.",
+      "price": 39.99,
+      "image": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400&h=400&fit=crop",
+      "category": "vetements",
+      "rating": { "rate": 4.5, "count": 65 }
+    },
+    {
+      "id": 14,
+      "title": "Veste en cuir véritable",
+      "description": "Veste stylée en cuir véritable, coupe ajustée.",
+      "price": 199.0,
+      "image": "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop",
+      "category": "vetements",
+      "rating": { "rate": 4.7, "count": 110 }
+    },
+    {
+      "id": 15,
+      "title": "Sweat à capuche unisexe",
+      "description": "Sweat confortable avec capuche et poche kangourou.",
+      "price": 29.9,
+      "image": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=400&fit=crop",
+      "category": "vetements",
+      "rating": { "rate": 4.3, "count": 98 }
+    },
+    {
+      "id": 16,
+      "title": "Manteau d’hiver laine",
+      "description": "Manteau chaud en laine avec doublure.",
+      "price": 149.99,
+      "image": "https://plus.unsplash.com/premium_photo-1674719144570-0728faf14f96?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8Y29hdHxlbnwwfHwwfHx8MA%3D%3D",
+      "category": "vetements",
+      "rating": { "rate": 4.6, "count": 70 }
+    },
+    {
+      "id": 17,
+      "title": "Chaussures de sport running",
+      "description": "Chaussures légères avec semelle amortissante.",
+      "price": 89.9,
+      "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
+      "category": "vetements",
+      "rating": { "rate": 4.5, "count": 134 }
+    },
+    {
+      "id": 18,
+      "title": "Chemise homme classique",
+      "description": "Chemise élégante, idéale pour le bureau.",
+      "price": 39.99,
+      "image": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&h=400&fit=crop",
+      "category": "vetements",
+      "rating": { "rate": 4.2, "count": 55 }
+    },
+    {
+      "id": 19,
+      "title": "Pantalon cargo",
+      "description": "Pantalon pratique avec plusieurs poches.",
+      "price": 59.9,
+      "image": "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=400&h=400&fit=crop",
+      "category": "vetements",
+      "rating": { "rate": 4.4, "count": 80 }
+    },
+    {
+      "id": 20,
+      "title": "Pull en cachemire",
+      "description": "Pull doux et chaud en cachemire premium.",
+      "price": 129.0,
+      "image": "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&h=400&fit=crop",
+      "category": "vetements",
+      "rating": { "rate": 4.8, "count": 90 }
+    },
+
+    {
+      "id": 21,
+      "title": "Mixeur de cuisine 500W",
+      "description": "Mixeur puissant avec 3 vitesses et bol en verre.",
+      "price": 49.9,
+      "image": "https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=400&h=400&fit=crop",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.7, "count": 230 }
+    },
+    {
+      "id": 22,
+      "title": "Aspirateur sans sac 2000W",
+      "description": "Aspirateur cyclonique puissant avec filtre HEPA.",
+      "price": 159.0,
+      "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.5, "count": 175 }
+    },
+    {
+      "id": 23,
+      "title": "Robot de cuisine multifonctions",
+      "description": "Robot avec 12 fonctions et accessoires inclus.",
+      "price": 299.0,
+      "image": "https://plus.unsplash.com/premium_photo-1711051351678-658b273f71d4?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fGtpdGNoZW4lMjByb2JvdHxlbnwwfHwwfHx8MA%3D%3D",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.6, "count": 140 }
+    },
+    {
+      "id": 24,
+      "title": "Machine à café expresso",
+      "description": "Machine à café automatique avec mousseur à lait.",
+      "price": 249.9,
+      "image": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=400&fit=crop",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.7, "count": 310 }
+    },
+    {
+      "id": 25,
+      "title": "Set de couteaux de cuisine",
+      "description": "Set de 6 couteaux en acier inoxydable.",
+      "price": 89.9,
+      "image": "https://images.unsplash.com/photo-1593618229012-8aaad1cfefc3?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8a25pdmVzfGVufDB8fDB8fHww",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.6, "count": 120 }
+    },
+    {
+      "id": 26,
+      "title": "Batterie de cuisine inox",
+      "description": "Lot de casseroles et poêles en inox.",
+      "price": 179.0,
+      "image": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.5, "count": 150 }
+    },
+    {
+      "id": 27,
+      "title": "Grille-pain 2 fentes",
+      "description": "Grille-pain compact avec thermostat réglable.",
+      "price": 39.99,
+      "image": "https://plus.unsplash.com/premium_photo-1718559007272-26a72b83fdcc?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8dG9hc3RlciUyMG92ZW58ZW58MHx8MHx8fDA%3D",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.4, "count": 80 }
+    },
+    {
+      "id": 28,
+      "title": "Bouilloire électrique 1.7L",
+      "description": "Bouilloire rapide avec arrêt automatique.",
+      "price": 29.99,
+      "image": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400&h=400&fit=crop",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.6, "count": 95 }
+    },
+    {
+      "id": 29,
+      "title": "Aspirateur robot SmartClean",
+      "description": "Robot aspirateur avec navigation intelligente.",
+      "price": 349.0,
+      "image": "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400&h=400&fit=crop",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.5, "count": 210 }
+    },
+    {
+      "id": 30,
+      "title": "Plaque de cuisson à induction",
+      "description": "Plaque 4 feux avec commandes tactiles.",
+      "price": 499.0,
+      "image": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop",
+      "category": "maison-cuisine",
+      "rating": { "rate": 4.7, "count": 145 }
+    },
+
+    {
+      "id": 31,
+      "title": "Raquette de tennis Pro",
+      "description": "Raquette légère et résistante.",
+      "price": 129.0,
+      "image": "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=400&fit=crop",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.6, "count": 64 }
+    },
+    {
+      "id": 32,
+      "title": "Ballon de football officiel",
+      "description": "Ballon taille 5 certifié FIFA.",
+      "price": 39.9,
+      "image": "https://images.unsplash.com/photo-1552318965-6e6be7484ada?w=400&h=400&fit=crop",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.7, "count": 200 }
+    },
+    {
+      "id": 33,
+      "title": "Vélo de montagne 21 vitesses",
+      "description": "VTT avec suspension avant et arrière.",
+      "price": 499.0,
+      "image": "https://plus.unsplash.com/premium_photo-1678718713393-2b88cde9605b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YmlrZXxlbnwwfHwwfHx8MA%3D%3D",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.6, "count": 85 }
+    },
+    {
+      "id": 34,
+      "title": "Tapis de yoga antidérapant",
+      "description": "Tapis épais avec sac de transport.",
+      "price": 29.99,
+      "image": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.5, "count": 170 }
+    },
+    {
+      "id": 35,
+      "title": "Sac de sport 40L",
+      "description": "Sac pratique avec compartiment chaussures.",
+      "price": 49.9,
+      "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.4, "count": 120 }
+    },
+    {
+      "id": 36,
+      "title": "Set haltères 20kg",
+      "description": "Haltères réglables avec disques inclus.",
+      "price": 79.9,
+      "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.7, "count": 60 }
+    },
+    {
+      "id": 37,
+      "title": "Chaussures de randonnée",
+      "description": "Chaussures imperméables pour trekking.",
+      "price": 119.0,
+      "image": "https://plus.unsplash.com/premium_photo-1672046218369-67e12ed1c364?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8d2Fsa2luZyUyMHNob2VzfGVufDB8fDB8fHww",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.6, "count": 90 }
+    },
+    {
+      "id": 38,
+      "title": "Planche de surf 7 pieds",
+      "description": "Planche idéale pour débutants et intermédiaires.",
+      "price": 299.0,
+      "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=400&h=400&fit=crop",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.5, "count": 50 }
+    },
+    {
+      "id": 39,
+      "title": "Raquette de badminton",
+      "description": "Raquette légère en carbone.",
+      "price": 59.9,
+      "image": "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=400&fit=crop",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.4, "count": 110 }
+    },
+    {
+      "id": 40,
+      "title": "Tente de camping 4 places",
+      "description": "Tente imperméable avec montage rapide.",
+      "price": 199.0,
+      "image": "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&h=400&fit=crop",
+      "category": "sports-loisirs",
+      "rating": { "rate": 4.7, "count": 130 }
+    },
+
+    {
+      "id": 41,
+      "title": "Crème hydratante visage",
+      "description": "Crème nourrissante pour tous types de peaux.",
+      "price": 24.9,
+      "image": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.6, "count": 220 }
+    },
+    {
+      "id": 42,
+      "title": "Shampooing fortifiant",
+      "description": "Shampooing à la kératine pour cheveux abîmés.",
+      "price": 14.9,
+      "image": "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.4, "count": 140 }
+    },
+    {
+      "id": 43,
+      "title": "Brosse à dents électrique",
+      "description": "Brosse rechargeable avec minuterie intégrée et 3 modes de nettoyage.",
+      "price": 59.9,
+      "image": "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.7, "count": 160 }
+    },
+    {
+      "id": 44,
+      "title": "Parfum Eau de Parfum 100ml",
+      "description": "Parfum floral fruité longue tenue pour femmes.",
+      "price": 79.9,
+      "image": "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.5, "count": 95 }
+    },
+    {
+      "id": 45,
+      "title": "Lotion après-rasage apaisante",
+      "description": "Lotion rafraîchissante avec aloe vera.",
+      "price": 19.9,
+      "image": "https://images.unsplash.com/photo-1503235930437-8c6293ba41f5?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.3, "count": 75 }
+    },
+    {
+      "id": 46,
+      "title": "Sérum anti-âge",
+      "description": "Sérum concentré à l’acide hyaluronique pour réduire les rides.",
+      "price": 49.9,
+      "image": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.6, "count": 180 }
+    },
+    {
+      "id": 47,
+      "title": "Baume à lèvres hydratant",
+      "description": "Stick nourrissant à base de beurre de karité.",
+      "price": 5.9,
+      "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.4, "count": 210 }
+    },
+    {
+      "id": 48,
+      "title": "Huile essentielle de lavande",
+      "description": "Huile pure 100% naturelle pour relaxation et bien-être.",
+      "price": 12.9,
+      "image": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.8, "count": 140 }
+    },
+    {
+      "id": 49,
+      "title": "Masque capillaire nourrissant",
+      "description": "Masque réparateur à l’huile d’argan pour cheveux secs.",
+      "price": 24.9,
+      "image": "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.5, "count": 130 }
+    },
+    {
+      "id": 50,
+      "title": "Vitamines multivitaminées",
+      "description": "Complément alimentaire pour renforcer l’immunité.",
+      "price": 29.9,
+      "image": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop",
+      "category": "beaute-sante",
+      "rating": { "rate": 4.6, "count": 200 }
+    }
+  ]
+}

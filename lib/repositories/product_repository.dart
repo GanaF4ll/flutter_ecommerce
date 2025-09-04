@@ -47,4 +47,24 @@ class ProductRepository {
       throw Exception('Error fetching products: $e');
     }
   }
+
+  Future<List<Product>> fetchLocalProducts() async {
+    try {
+      String jsonString = await _productService.fetchLocalProducts();
+      Map<String, dynamic> jsonData = json.decode(jsonString);
+      List<dynamic> products = jsonData['products'];
+      return products.map((item) => Product.fromJson(item)).toList();
+    } catch (e) {
+      throw Exception('Error fetching local products: $e');
+    }
+  }
+
+  Future<Product> fetchLocalProductById(String id) async {
+    try {
+      String jsonString = await _productService.fetchLocalProductById(id);
+      return Product.fromJson(json.decode(jsonString));
+    } catch (e) {
+      throw Exception('Error fetching local product: $e');
+    }
+  }
 }

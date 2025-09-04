@@ -19,11 +19,16 @@ class _CatalogPageState extends State<CatalogPage> {
   @override
   void initState() {
     super.initState();
-    futureProducts = fetchProducts();
+    futureProducts = fetchLocalProducts();
+    // futureProducts = fetchProducts();
   }
 
   Future<List<Product>> fetchProducts() async {
     return await _productRepository.fetchProducts();
+  }
+
+  Future<List<Product>> fetchLocalProducts() async {
+    return await _productRepository.fetchLocalProducts();
   }
 
   @override

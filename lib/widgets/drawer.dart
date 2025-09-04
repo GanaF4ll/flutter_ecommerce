@@ -26,7 +26,7 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.home, color: Colors.cyan),
-            title: const Text('Home'),
+            title: const Text('Accueil'),
             onTap: () => _go(context, '/'),
           ),
           ListTile(

@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 class ProductService {
@@ -20,5 +23,26 @@ class ProductService {
   ///   A Future object containing an HTTP response is being returned.
   Future<http.Response> fetchProductById(String id) {
     return http.get(Uri.parse('https://fakestoreapi.com/products/$id'));
+  }
+
+  Future<String> fetchLocalProducts() async {
+    return await rootBundle.loadString('lib/data/products.json');
+  }
+
+  Future<String> fetchLocalProductById(String id) async {
+    String jsonString = await rootBundle.loadString('lib/data/products.json');
+    Map<String, dynamic> jsonData = json.decode(jsonString);
+    List<dynamic> products = jsonData['products'];
+
+    var product = products.firstWhere(
+      (product) => product['id'].toString() == id,
+      orElse: () => null,
+    );
+
+    if (product != null) {
+      return json.encode(product);
+    } else {
+      throw Exception('Product with ID $id not found');
+    }
   }
 }

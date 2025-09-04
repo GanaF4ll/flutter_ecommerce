@@ -13,6 +13,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // ici on peut utiliser les services de firebase sur notre app
   await Firebase.initializeApp();
+
+  // final database = await openDatabase(
+  //   join(await getDatabasesPath(), 'cart_database.db'),
+  //   onCreate: (db, version) {
+  //     return db.execute(
+  //       'CREATE TABLE cart (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, quantity INTEGER)',
+  //     );
+  //   },
+  // );
   runApp(const MyApp());
 }
 

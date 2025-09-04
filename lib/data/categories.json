@@ -1,0 +1,9 @@
+{
+  "categories": [
+    { "name": "Électronique", "slug": "electronique" },
+    { "name": "Vêtements", "slug": "vetements" },
+    { "name": "Maison & Cuisine", "slug": "maison-cuisine" },
+    { "name": "Sports & Loisirs", "slug": "sports-loisirs" },
+    { "name": "Beauté & Santé", "slug": "beaute-sante" }
+  ]
+}

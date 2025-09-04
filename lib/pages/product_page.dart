@@ -19,12 +19,16 @@ class _ProductPageState extends State<ProductPage> {
   @override
   void initState() {
     super.initState();
-    futureProduct = fetchProductById(widget.id);
+    futureProduct = fetchLocalProductById(widget.id);
+    // futureProduct = fetchProductById(widget.id);
   }
 
-  Future<Product> fetchProductById(String id) async {
-    return await _productRepository.fetchProductById(id);
+  Future<Product> fetchLocalProductById(String id) async {
+    return await _productRepository.fetchLocalProductById(id);
   }
+  // Future<Product> fetchProductById(String id) async {
+  //   return await _productRepository.fetchProductById(id);
+  // }
 
   @override
   Widget build(BuildContext context) {

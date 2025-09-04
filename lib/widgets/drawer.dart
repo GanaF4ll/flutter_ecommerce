@@ -24,14 +24,20 @@ class AppDrawer extends StatelessWidget {
               style: TextStyle(color: Colors.white, fontSize: 24),
             ),
           ),
-          ListTile(title: const Text('Home'), onTap: () => _go(context, '/')),
           ListTile(
-            title: const Text('Second Page'),
-            onTap: () => _go(context, '/second'),
+            leading: const Icon(Icons.home, color: Colors.cyan),
+            title: const Text('Home'),
+            onTap: () => _go(context, '/'),
           ),
           ListTile(
-            title: const Text('Third Page'),
-            onTap: () => _go(context, '/third'),
+            leading: const Icon(Icons.euro_outlined, color: Colors.cyan),
+            title: const Text('Catalogue'),
+            onTap: () => _go(context, '/catalog'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.shopping_cart, color: Colors.cyan),
+            title: const Text('Panier'),
+            onTap: () => _go(context, '/cart'),
           ),
           ListTile(
             leading: const Icon(Icons.login, color: Colors.green),
@@ -44,9 +50,9 @@ class AppDrawer extends StatelessWidget {
             onTap: () => _go(context, '/register'),
           ),
           ListTile(
-            leading: const Icon(Icons.shopping_cart, color: Colors.cyan),
-            title: const Text('Catalogue'),
-            onTap: () => _go(context, '/catalog'),
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Se déconnecter'),
+            onTap: () => _go(context, '/register'),
           ),
         ],
       ),

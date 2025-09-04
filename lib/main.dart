@@ -1,9 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ecommerce/pages/cart_page.dart';
 import 'package:flutter_ecommerce/pages/catalog_page.dart';
 import 'package:flutter_ecommerce/pages/home_page.dart';
 
 import 'pages/login_page.dart';
+import 'pages/product_page.dart';
 import 'pages/register_page.dart';
 
 void main() async {
@@ -29,6 +31,14 @@ class MyApp extends StatelessWidget {
         '/login': (_) => const LoginPage(),
         '/register': (_) => const RegisterPage(),
         '/catalog': (_) => const CatalogPage(),
+        '/cart': (_) => const CartPage(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name?.startsWith('/product/') == true) {
+          final id = settings.name!.split('/')[2];
+          return MaterialPageRoute(builder: (_) => ProductPage(id: id));
+        }
+        return null;
       },
     );
   }

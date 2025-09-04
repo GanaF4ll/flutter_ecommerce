@@ -1,11 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_ecommerce/entities/product.dart';
 import 'package:flutter_ecommerce/guards/auth_guard.dart';
 import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:flutter_ecommerce/widgets/drawer.dart';
 import 'package:flutter_ecommerce/widgets/product_card.dart';
-import 'package:http/http.dart' as http;
 
 class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
@@ -15,7 +13,7 @@ class CatalogPage extends StatefulWidget {
 }
 
 class _CatalogPageState extends State<CatalogPage> {
-  late Future<List<dynamic>> futureProducts;
+  late Future<List<Product>> futureProducts;
   final ProductRepository _productRepository = ProductRepository();
 
   @override
@@ -24,17 +22,8 @@ class _CatalogPageState extends State<CatalogPage> {
     futureProducts = fetchProducts();
   }
 
-  Future<List<dynamic>> fetchProducts() async {
-    try {
-      http.Response response = await _productRepository.fetchProducts();
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load products');
-      }
-    } catch (e) {
-      throw Exception('Error fetching products: $e');
-    }
+  Future<List<Product>> fetchProducts() async {
+    return await _productRepository.fetchProducts();
   }
 
   @override
@@ -43,7 +32,7 @@ class _CatalogPageState extends State<CatalogPage> {
       child: Scaffold(
         appBar: AppBar(title: const Text('Catalogue')),
         drawer: const AppDrawer(),
-        body: FutureBuilder<List<dynamic>>(
+        body: FutureBuilder<List<Product>>(
           future: futureProducts,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {

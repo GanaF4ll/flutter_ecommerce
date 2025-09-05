@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/pages/cart_page.dart';
 import 'package:flutter_ecommerce/pages/catalog_page.dart';
 import 'package:flutter_ecommerce/pages/home_page.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'pages/login_page.dart';
 import 'pages/product_page.dart';
@@ -14,14 +16,15 @@ void main() async {
   // ici on peut utiliser les services de firebase sur notre app
   await Firebase.initializeApp();
 
-  // final database = await openDatabase(
-  //   join(await getDatabasesPath(), 'cart_database.db'),
-  //   onCreate: (db, version) {
-  //     return db.execute(
-  //       'CREATE TABLE cart (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, quantity INTEGER)',
-  //     );
-  //   },
-  // );
+  final database = await openDatabase(
+    join(await getDatabasesPath(), 'cart_database.db'),
+    version: 1,
+    onCreate: (db, version) {
+      return db.execute(
+        'CREATE TABLE cart (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, quantity INTEGER)',
+      );
+    },
+  );
   runApp(const MyApp());
 }
 

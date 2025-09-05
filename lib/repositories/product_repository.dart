@@ -7,15 +7,6 @@ import 'package:http/http.dart' as http;
 class ProductRepository {
   final ProductService _productService = ProductService();
 
-  /// This Dart function fetches a product by its ID asynchronously and handles errors appropriately.
-  ///
-  /// Args:
-  ///   id (String): The `id` parameter in the `fetchProductById` function is the unique identifier of the
-  /// product that you want to fetch from the server. This function makes an asynchronous HTTP request to
-  /// retrieve product data based on this identifier.
-  ///
-  /// Returns:
-  ///   A Future object containing a Product is being returned.
   Future<Product> fetchProductById(String id) async {
     try {
       http.Response response = await _productService.fetchProductById(id);
@@ -29,11 +20,6 @@ class ProductRepository {
     }
   }
 
-  /// The function `fetchProducts` asynchronously retrieves product data from a service, processes it, and
-  /// returns a list of Product objects, handling potential errors along the way.
-  ///
-  /// Returns:
-  ///   A `Future<List<Product>>` is being returned from the `fetchProducts` function.
   Future<List<Product>> fetchProducts() async {
     try {
       http.Response response = await _productService.fetchProducts();
@@ -65,6 +51,18 @@ class ProductRepository {
       return Product.fromJson(json.decode(jsonString));
     } catch (e) {
       throw Exception('Error fetching local product: $e');
+    }
+  }
+
+  Future<List<Product>> fetchLocalProductsByCategory(String category) async {
+    try {
+      String jsonString = await _productService.fetchLocalProductsByCategory(
+        category,
+      );
+      List<dynamic> products = json.decode(jsonString);
+      return products.map((item) => Product.fromJson(item)).toList();
+    } catch (e) {
+      throw Exception('Error fetching local products by category: $e');
     }
   }
 }

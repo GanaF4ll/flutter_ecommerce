@@ -4,31 +4,32 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 class ProductService {
-  /// The function `fetchProducts` makes an HTTP GET request to retrieve products from a fake store API.
-  ///
-  /// Returns:
-  ///   A Future object containing an HTTP Response is being returned.
   Future<http.Response> fetchProducts() {
     return http.get(Uri.parse('https://fakestoreapi.com/products'));
   }
 
-  /// The function `fetchProductById` retrieves product information from a specified API endpoint using
-  /// the provided product ID.
-  ///
-  /// Args:
-  ///   id (String): The `id` parameter in the `fetchProductById` function is a unique identifier for a
-  /// product. It is used to fetch product information from the API by appending it to the URL endpoint.
-  ///
-  /// Returns:
-  ///   A Future object containing an HTTP response is being returned.
   Future<http.Response> fetchProductById(String id) {
     return http.get(Uri.parse('https://fakestoreapi.com/products/$id'));
   }
 
+  /// The function fetches local products data from a JSON file using rootBundle in Dart.
+  ///
+  /// Returns:
+  ///   A Future<String> is being returned.
   Future<String> fetchLocalProducts() async {
     return await rootBundle.loadString('lib/data/products.json');
   }
 
+  /// This Dart function fetches a local product by ID from a JSON file and returns the product as a JSON
+  /// string or throws an exception if the product is not found.
+  ///
+  /// Args:
+  ///   id (String): The `fetchLocalProductById` function is designed to fetch a product by its ID from a
+  /// local JSON file. The `id` parameter represents the unique identifier of the product you want to
+  /// retrieve. When you call this function with a specific `id`, it will search for a product in the JSON
+  ///
+  /// Returns:
+  ///   The function `fetchLocalProductById` returns a `Future<String>`.
   Future<String> fetchLocalProductById(String id) async {
     String jsonString = await rootBundle.loadString('lib/data/products.json');
     Map<String, dynamic> jsonData = json.decode(jsonString);
@@ -44,5 +45,25 @@ class ProductService {
     } else {
       throw Exception('Product with ID $id not found');
     }
+  }
+
+  /// This Dart function fetches local products from a JSON file by category and returns them as a
+  /// JSON-encoded string.
+  ///
+  /// Args:
+  ///   category (String): The `fetchLocalProductsByCategory` function you provided reads a JSON file
+  /// containing product data, filters the products based on a given category, and returns the filtered
+  /// products as a JSON string.
+  ///
+  /// Returns:
+  ///   A Future<String> containing a JSON-encoded list of products that belong to the specified category.
+  Future<String> fetchLocalProductsByCategory(String category) async {
+    String jsonString = await rootBundle.loadString('lib/data/products.json');
+    Map<String, dynamic> jsonData = json.decode(jsonString);
+    List<dynamic> products = jsonData['products'];
+    List<dynamic> productsByCategory = products
+        .where((product) => product['category'] == category)
+        .toList();
+    return json.encode(productsByCategory);
   }
 }

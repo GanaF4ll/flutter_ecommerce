@@ -6,7 +6,7 @@ class AuthGuard extends StatelessWidget {
   final String loginRoute;
 
   const AuthGuard({super.key, required this.child, this.loginRoute = '/login'});
-
+  // final user = FirebaseAuth.instance.currentUser;
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(

@@ -71,7 +71,15 @@ class _CatalogPageState extends State<CatalogPage> {
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text('No products found'));
                   } else {
-                    return ListView.builder(
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(8),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.78,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                          ),
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
                         return ProductCard(product: snapshot.data![index]);

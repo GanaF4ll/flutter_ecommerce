@@ -6,36 +6,24 @@ class AuthGuard extends StatelessWidget {
   final String loginRoute;
 
   const AuthGuard({super.key, required this.child, this.loginRoute = '/login'});
-  // final user = FirebaseAuth.instance.currentUser;
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        // En cours de chargement
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    final user = FirebaseAuth.instance.currentUser;
 
-        // Vérifier si l'utilisateur est authentifié
-        if (snapshot.hasData && snapshot.data != null) {
-          // Utilisateur authentifié, afficher la page demandée
-          return child;
-        } else {
-          // Utilisateur non authentifié, rediriger vers la page de connexion
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushReplacementNamed(loginRoute);
-          });
+    // Vérifier si l'utilisateur est authentifié
+    if (user != null) {
+      // Utilisateur authentifié, afficher la page demandée
+      return child;
+    } else {
+      // Utilisateur non authentifié, rediriger vers la page de connexion
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacementNamed(loginRoute);
+      });
 
-          // Afficher un indicateur de chargement en attendant la redirection
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-      },
-    );
+      // Afficher un indicateur de chargement en attendant la redirection
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
   }
 }
 

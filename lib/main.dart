@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/pages/cart_page.dart';
 import 'package:flutter_ecommerce/pages/catalog_page.dart';
+import 'package:flutter_ecommerce/pages/favorites_page.dart';
 import 'package:flutter_ecommerce/pages/home_page.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
         '/register': (_) => const RegisterPage(),
         '/catalog': (_) => const CatalogPage(),
         '/cart': (_) => const CartPage(),
+        '/favorites': (_) => const FavoritesPage(),
       },
       onGenerateRoute: (settings) {
         if (settings.name?.startsWith('/product/') == true) {

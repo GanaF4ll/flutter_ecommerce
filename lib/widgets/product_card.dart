@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
 import 'package:flutter_ecommerce/repositories/cart_repository.dart';
+import 'package:flutter_ecommerce/repositories/favorite_repository.dart';
 import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:flutter_ecommerce/services/cart_service.dart';
+import 'package:flutter_ecommerce/services/favorite_service.dart';
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 
@@ -17,18 +19,22 @@ class ProductCard extends StatefulWidget {
 
 class _ProductCardState extends State<ProductCard> {
   late CartService _cartService;
+  late FavoriteService _favoriteService;
   bool _isLoading = false;
   bool _isInitialized = false;
+  bool _isFavorite = false;
+  bool _isTogglingFavorite = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeCartService();
+    _initializeServices();
   }
 
-  Future<void> _initializeCartService() async {
+  Future<void> _initializeServices() async {
     try {
-      final database = await openDatabase(
+      // Base de données pour le panier
+      final cartDatabase = await openDatabase(
         path.join(await getDatabasesPath(), 'cart_database.db'),
         version: 1,
         onCreate: (db, version) {
@@ -37,17 +43,47 @@ class _ProductCardState extends State<ProductCard> {
           );
         },
       );
+
+      // Base de données pour les favoris
+      final favoritesDatabase = await openDatabase(
+        path.join(await getDatabasesPath(), 'favorites_database.db'),
+        version: 1,
+        onCreate: (db, version) {
+          return db.execute(
+            'CREATE TABLE favorites (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, added_at TEXT)',
+          );
+        },
+      );
+
       final productRepository = ProductRepository();
+
+      // Initialiser le service panier
       final cartRepository = CartRepository(
-        database: database,
+        database: cartDatabase,
         productRepository: productRepository,
       );
       _cartService = CartService(cartRepository: cartRepository);
+
+      // Initialiser le service favoris
+      final favoriteRepository = FavoriteRepository(
+        database: favoritesDatabase,
+        productRepository: productRepository,
+      );
+      _favoriteService = FavoriteService(
+        favoriteRepository: favoriteRepository,
+      );
+
+      // Vérifier si le produit est en favoris
+      final isFavorite = await _favoriteService.isProductFavorite(
+        widget.product,
+      );
+
       setState(() {
         _isInitialized = true;
+        _isFavorite = isFavorite;
       });
     } catch (e) {
-      print('Erreur d\'initialisation du cart service: $e');
+      print('Erreur d\'initialisation des services: $e');
     }
   }
 
@@ -91,6 +127,58 @@ class _ProductCardState extends State<ProductCard> {
     }
   }
 
+  Future<void> _toggleFavorite() async {
+    if (!_isInitialized) return;
+
+    setState(() {
+      _isTogglingFavorite = true;
+    });
+
+    try {
+      final newFavoriteStatus = await _favoriteService.toggleProductFavorite(
+        widget.product,
+      );
+      if (mounted) {
+        setState(() {
+          _isFavorite = newFavoriteStatus;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newFavoriteStatus
+                  ? '${widget.product.title} ajouté aux favoris'
+                  : '${widget.product.title} retiré des favoris',
+            ),
+            backgroundColor: newFavoriteStatus ? Colors.pink : Colors.orange,
+            duration: const Duration(seconds: 2),
+            action: newFavoriteStatus
+                ? SnackBarAction(
+                    label: 'Voir les favoris',
+                    onPressed: () => Navigator.pushNamed(context, '/favorites'),
+                  )
+                : null,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de la gestion des favoris'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTogglingFavorite = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -129,10 +217,24 @@ class _ProductCardState extends State<ProductCard> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.favorite_border),
-                      onPressed: () {
-                        // TODO: Ajouter aux favoris
-                      },
+                      icon: _isTogglingFavorite
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.pink,
+                              ),
+                            )
+                          : Icon(
+                              _isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: _isFavorite ? Colors.pink : Colors.grey,
+                            ),
+                      onPressed: _isInitialized && !_isTogglingFavorite
+                          ? _toggleFavorite
+                          : null,
                       iconSize: 20,
                       padding: const EdgeInsets.all(4),
                       constraints: const BoxConstraints(
@@ -172,14 +274,12 @@ class _ProductCardState extends State<ProductCard> {
             // Informations du produit
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: 1),
                     // Titre du produit
-                    Flexible(
+                    Expanded(
                       child: Text(
                         widget.product.title,
                         style: const TextStyle(
@@ -191,25 +291,19 @@ class _ProductCardState extends State<ProductCard> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
+                    // Prix et bouton
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '\$${widget.product.price}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                  height: 1.0,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            '\$${widget.product.price}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                         // Bouton Ajouter au panier à droite

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -11,8 +12,22 @@ class AppDrawer extends StatelessWidget {
     Navigator.pushReplacementNamed(context, route);
   }
 
+  void _logout(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      Navigator.of(context).pushReplacementNamed('/login');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la déconnexion: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final isLoggedIn = user != null;
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -40,20 +55,30 @@ class AppDrawer extends StatelessWidget {
             onTap: () => _go(context, '/cart'),
           ),
           ListTile(
-            leading: const Icon(Icons.login, color: Colors.green),
-            title: const Text('Se connecter'),
-            onTap: () => _go(context, '/login'),
+            leading: const Icon(Icons.favorite, color: Colors.pink),
+            title: const Text('Favoris'),
+            onTap: () => _go(context, '/favorites'),
           ),
-          ListTile(
-            leading: const Icon(Icons.person_add, color: Colors.cyan),
-            title: const Text('S\'inscrire'),
-            onTap: () => _go(context, '/register'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Se déconnecter'),
-            onTap: () => _go(context, '/register'),
-          ),
+          // Afficher login/register seulement si l'utilisateur n'est pas connecté
+          if (!isLoggedIn) ...[
+            ListTile(
+              leading: const Icon(Icons.login, color: Colors.green),
+              title: const Text('Se connecter'),
+              onTap: () => _go(context, '/login'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_add, color: Colors.cyan),
+              title: const Text('S\'inscrire'),
+              onTap: () => _go(context, '/register'),
+            ),
+          ],
+          // Afficher logout seulement si l'utilisateur est connecté
+          if (isLoggedIn)
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Se déconnecter'),
+              onTap: () => _logout(context),
+            ),
         ],
       ),
     );

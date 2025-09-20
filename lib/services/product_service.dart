@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:flutter_ecommerce/entities/product.dart';
 import 'package:http/http.dart' as http;
 
 class ProductService {
@@ -65,5 +66,47 @@ class ProductService {
         .where((product) => product['category'] == category)
         .toList();
     return json.encode(productsByCategory);
+  }
+
+  /// Fetch local categories from JSON file
+  Future<String> fetchLocalCategories() async {
+    return await rootBundle.loadString('lib/data/categories.json');
+  }
+
+  /// Get products as List<Product>
+  Future<List<Product>> getProducts() async {
+    String jsonString = await fetchLocalProducts();
+    Map<String, dynamic> jsonData = json.decode(jsonString);
+    List<dynamic> productsData = jsonData['products'];
+    return productsData.map((json) => Product.fromJson(json)).toList();
+  }
+
+  /// Get categories as List<Map<String, String>>
+  Future<List<Map<String, String>>> getCategories() async {
+    String jsonString = await fetchLocalCategories();
+    Map<String, dynamic> jsonData = json.decode(jsonString);
+    List<dynamic> categoriesData = jsonData['categories'];
+    return categoriesData
+        .map(
+          (category) => {
+            'name': category['name'] as String,
+            'slug': category['slug'] as String,
+          },
+        )
+        .toList();
+  }
+
+  /// Get products by category as List<Product>
+  Future<List<Product>> getProductsByCategory(String category) async {
+    String jsonString = await fetchLocalProductsByCategory(category);
+    List<dynamic> productsData = json.decode(jsonString);
+    return productsData.map((json) => Product.fromJson(json)).toList();
+  }
+
+  /// Get product by ID as Product
+  Future<Product> getProductById(String id) async {
+    String jsonString = await fetchLocalProductById(id);
+    Map<String, dynamic> productData = json.decode(jsonString);
+    return Product.fromJson(productData);
   }
 }

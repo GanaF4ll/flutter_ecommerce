@@ -58,4 +58,3 @@ class Favorite {
     return 'Favorite(id: $id, productId: $productId, addedAt: $addedAt)';
   }
 }
-

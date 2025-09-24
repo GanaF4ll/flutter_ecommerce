@@ -15,11 +15,15 @@ class AppDrawer extends StatelessWidget {
   void _logout(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
-      Navigator.of(context).pushReplacementNamed('/login');
+      if (context.mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la déconnexion: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la déconnexion: $e')),
+        );
+      }
     }
   }
 

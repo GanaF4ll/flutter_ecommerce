@@ -16,7 +16,7 @@ class ProductService {
   /// The function fetches local products data from a JSON file using rootBundle in Dart.
   ///
   /// Returns:
-  ///   A Future<String> is being returned.
+  ///   A Future&lt;String&gt; containing the JSON data.
   Future<String> fetchLocalProducts() async {
     return await rootBundle.loadString('lib/data/products.json');
   }
@@ -30,7 +30,7 @@ class ProductService {
   /// retrieve. When you call this function with a specific `id`, it will search for a product in the JSON
   ///
   /// Returns:
-  ///   The function `fetchLocalProductById` returns a `Future<String>`.
+  ///   A Future&lt;String&gt; containing the product JSON data.
   Future<String> fetchLocalProductById(String id) async {
     String jsonString = await rootBundle.loadString('lib/data/products.json');
     Map<String, dynamic> jsonData = json.decode(jsonString);
@@ -57,7 +57,7 @@ class ProductService {
   /// products as a JSON string.
   ///
   /// Returns:
-  ///   A Future<String> containing a JSON-encoded list of products that belong to the specified category.
+  ///   A Future&lt;String&gt; containing JSON-encoded products for the category.
   Future<String> fetchLocalProductsByCategory(String category) async {
     String jsonString = await rootBundle.loadString('lib/data/products.json');
     Map<String, dynamic> jsonData = json.decode(jsonString);
@@ -73,7 +73,7 @@ class ProductService {
     return await rootBundle.loadString('lib/data/categories.json');
   }
 
-  /// Get products as List<Product>
+  /// Get products as List&lt;Product&gt;
   Future<List<Product>> getProducts() async {
     String jsonString = await fetchLocalProducts();
     Map<String, dynamic> jsonData = json.decode(jsonString);
@@ -81,7 +81,7 @@ class ProductService {
     return productsData.map((json) => Product.fromJson(json)).toList();
   }
 
-  /// Get categories as List<Map<String, String>>
+  /// Get categories as List&lt;Map&lt;String, String&gt;&gt;
   Future<List<Map<String, String>>> getCategories() async {
     String jsonString = await fetchLocalCategories();
     Map<String, dynamic> jsonData = json.decode(jsonString);
@@ -96,7 +96,7 @@ class ProductService {
         .toList();
   }
 
-  /// Get products by category as List<Product>
+  /// Get products by category as List&lt;Product&gt;
   Future<List<Product>> getProductsByCategory(String category) async {
     String jsonString = await fetchLocalProductsByCategory(category);
     List<dynamic> productsData = json.decode(jsonString);

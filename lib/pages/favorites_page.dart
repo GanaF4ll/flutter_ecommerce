@@ -48,7 +48,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
       );
       _loadFavorites();
     } catch (e) {
-      print('Erreur d\'initialisation des favoris: $e');
+      // Erreur d'initialisation des favoris: $e
       setState(() {
         _isLoading = false;
       });
@@ -258,7 +258,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
                                           _removeFromFavorites(favorite),
                                       child: Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.red.withOpacity(0.9),
+                                          color: Colors.red.withValues(
+                                            alpha: 0.9,
+                                          ),
                                           shape: BoxShape.circle,
                                         ),
                                         padding: const EdgeInsets.all(6),
@@ -284,4 +286,3 @@ class _FavoritesPageState extends State<FavoritesPage> {
     );
   }
 }
-

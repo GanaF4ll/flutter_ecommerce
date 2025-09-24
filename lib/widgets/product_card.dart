@@ -83,7 +83,7 @@ class _ProductCardState extends State<ProductCard> {
         _isFavorite = isFavorite;
       });
     } catch (e) {
-      print('Erreur d\'initialisation des services: $e');
+      // Erreur d'initialisation des services: $e
     }
   }
 

@@ -14,7 +14,7 @@ class FavoriteService {
       await _favoriteRepository.addToFavorites(product.id);
       return true;
     } catch (e) {
-      print('Erreur lors de l\'ajout aux favoris: $e');
+      // Erreur lors de l'ajout aux favoris: $e
       return false;
     }
   }
@@ -25,7 +25,7 @@ class FavoriteService {
       await _favoriteRepository.removeFromFavorites(product.id);
       return true;
     } catch (e) {
-      print('Erreur lors de la suppression des favoris: $e');
+      // Erreur lors de la suppression des favoris: $e
       return false;
     }
   }
@@ -35,7 +35,7 @@ class FavoriteService {
     try {
       return await _favoriteRepository.toggleFavorite(product.id);
     } catch (e) {
-      print('Erreur lors du basculement des favoris: $e');
+      // Erreur lors du basculement des favoris: $e
       return false;
     }
   }
@@ -45,7 +45,7 @@ class FavoriteService {
     try {
       return await _favoriteRepository.isFavorite(product.id);
     } catch (e) {
-      print('Erreur lors de la vérification des favoris: $e');
+      // Erreur lors de la vérification des favoris: $e
       return false;
     }
   }
@@ -55,7 +55,7 @@ class FavoriteService {
     try {
       return await _favoriteRepository.isFavorite(productId);
     } catch (e) {
-      print('Erreur lors de la vérification des favoris: $e');
+      // Erreur lors de la vérification des favoris: $e
       return false;
     }
   }
@@ -65,7 +65,7 @@ class FavoriteService {
     try {
       return await _favoriteRepository.getFavorites();
     } catch (e) {
-      print('Erreur lors de la récupération des favoris: $e');
+      // Erreur lors de la récupération des favoris: $e
       return [];
     }
   }
@@ -79,7 +79,7 @@ class FavoriteService {
           .map((favorite) => favorite.product!)
           .toList();
     } catch (e) {
-      print('Erreur lors de la récupération des produits favoris: $e');
+      // Erreur lors de la récupération des produits favoris: $e
       return [];
     }
   }
@@ -90,7 +90,7 @@ class FavoriteService {
       await _favoriteRepository.clearFavorites();
       return true;
     } catch (e) {
-      print('Erreur lors de la suppression de tous les favoris: $e');
+      // Erreur lors de la suppression de tous les favoris: $e
       return false;
     }
   }
@@ -100,7 +100,7 @@ class FavoriteService {
     try {
       return await _favoriteRepository.getFavoriteCount();
     } catch (e) {
-      print('Erreur lors du comptage des favoris: $e');
+      // Erreur lors du comptage des favoris: $e
       return 0;
     }
   }
@@ -110,9 +110,8 @@ class FavoriteService {
     try {
       return await _favoriteRepository.getFavoriteByProductId(productId);
     } catch (e) {
-      print('Erreur lors de la récupération du favori: $e');
+      // Erreur lors de la récupération du favori: $e
       return null;
     }
   }
 }
-

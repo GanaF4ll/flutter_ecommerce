@@ -17,7 +17,7 @@ void main() async {
   // ici on peut utiliser les services de firebase sur notre app
   await Firebase.initializeApp();
 
-  final database = await openDatabase(
+  await openDatabase(
     join(await getDatabasesPath(), 'cart_database.db'),
     version: 1,
     onCreate: (db, version) {

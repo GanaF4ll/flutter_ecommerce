@@ -14,7 +14,7 @@ class CartService {
       await _cartRepository.addToCart(product.id, quantity);
       return true;
     } catch (e) {
-      print('Erreur lors de l\'ajout au panier: $e');
+      // Erreur lors de l'ajout au panier: $e
       return false;
     }
   }
@@ -24,7 +24,7 @@ class CartService {
     try {
       return await _cartRepository.getCartItems();
     } catch (e) {
-      print('Erreur lors de la récupération du panier: $e');
+      // Erreur lors de la récupération du panier: $e
       return [];
     }
   }
@@ -38,7 +38,7 @@ class CartService {
       }
       return false;
     } catch (e) {
-      print('Erreur lors de la mise à jour de la quantité: $e');
+      // Erreur lors de la mise à jour de la quantité: $e
       return false;
     }
   }
@@ -52,7 +52,7 @@ class CartService {
       }
       return false;
     } catch (e) {
-      print('Erreur lors de la suppression: $e');
+      // Erreur lors de la suppression: $e
       return false;
     }
   }
@@ -63,7 +63,7 @@ class CartService {
       await _cartRepository.clearCart();
       return true;
     } catch (e) {
-      print('Erreur lors de la suppression du panier: $e');
+      // Erreur lors de la suppression du panier: $e
       return false;
     }
   }
@@ -73,7 +73,7 @@ class CartService {
     try {
       return await _cartRepository.getCartItemCount();
     } catch (e) {
-      print('Erreur lors du comptage des items: $e');
+      // Erreur lors du comptage des items: $e
       return 0;
     }
   }
@@ -83,7 +83,7 @@ class CartService {
     try {
       return await _cartRepository.getCartTotal();
     } catch (e) {
-      print('Erreur lors du calcul du total: $e');
+      // Erreur lors du calcul du total: $e
       return 0.0;
     }
   }
@@ -94,7 +94,7 @@ class CartService {
       final item = await _cartRepository.getCartItemByProductId(productId);
       return item != null;
     } catch (e) {
-      print('Erreur lors de la vérification: $e');
+      // Erreur lors de la vérification: $e
       return false;
     }
   }
@@ -105,7 +105,7 @@ class CartService {
       final item = await _cartRepository.getCartItemByProductId(productId);
       return item?.quantity ?? 0;
     } catch (e) {
-      print('Erreur lors de la récupération de la quantité: $e');
+      // Erreur lors de la récupération de la quantité: $e
       return 0;
     }
   }

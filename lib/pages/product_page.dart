@@ -53,7 +53,7 @@ class _ProductPageState extends State<ProductPage> {
         _isInitialized = true;
       });
     } catch (e) {
-      print('Erreur d\'initialisation du cart service: $e');
+      // Erreur d'initialisation du cart service: $e
     }
   }
 
@@ -143,7 +143,7 @@ class _ProductPageState extends State<ProductPage> {
 
                     // Titre du produit
                     Text(
-                      product.title ?? 'No title',
+                      product.title,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
@@ -151,7 +151,7 @@ class _ProductPageState extends State<ProductPage> {
 
                     // Prix
                     Text(
-                      '${product.price ?? 0} €',
+                      '${product.price} €',
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(
                             color: Colors.cyan,
@@ -167,7 +167,7 @@ class _ProductPageState extends State<ProductPage> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.cyan.withOpacity(0.1),
+                        color: Colors.cyan.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -211,10 +211,10 @@ class _ProductPageState extends State<ProductPage> {
                           Icon(Icons.star, color: Colors.amber, size: 20),
                           const SizedBox(width: 4),
                           Text(
-                            '${product.rating.rate ?? 0}',
+                            '${product.rating.rate}',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          Text(' (${product.rating.count ?? 0} avis)'),
+                          Text(' (${product.rating.count} avis)'),
                         ],
                       ),
                       const SizedBox(height: 32),

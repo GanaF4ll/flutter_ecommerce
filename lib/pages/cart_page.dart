@@ -40,7 +40,7 @@ class _CartPageState extends State<CartPage> {
       _cartService = CartService(cartRepository: cartRepository);
       _loadCartItems();
     } catch (e) {
-      print('Erreur d\'initialisation du panier: $e');
+      // Erreur d'initialisation du panier: $e
     }
   }
 
@@ -55,9 +55,11 @@ class _CartPageState extends State<CartPage> {
     final success = await _cartService.updateQuantity(item, newQuantity);
     if (success) {
       _loadCartItems();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Quantité mise à jour')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Quantité mise à jour')));
+      }
     }
   }
 
@@ -65,9 +67,11 @@ class _CartPageState extends State<CartPage> {
     final success = await _cartService.removeFromCart(item);
     if (success) {
       _loadCartItems();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Produit retiré du panier')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Produit retiré du panier')),
+        );
+      }
     }
   }
 
@@ -94,9 +98,11 @@ class _CartPageState extends State<CartPage> {
       final success = await _cartService.clearCart();
       if (success) {
         _loadCartItems();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Panier vidé')));
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Panier vidé')));
+        }
       }
     }
   }

@@ -42,11 +42,11 @@ jobs:
             total_lf=$(grep -E "^LF:" coverage/lcov.info | awk -F: '{s+=$2} END{print s}')
             total_lh=$(grep -E "^LH:" coverage/lcov.info | awk -F: '{s+=$2} END{print s}')
             pct=$(python3 - <<'PY'
-            total_lf = int("${total_lf}")
-            total_lh = int("${total_lh}")
-            print(f"{(total_lh/total_lf)*100:.2f}")
-            PY
-            )
+          total_lf = int("${total_lf}")
+          total_lh = int("${total_lh}")
+          print(f"{(total_lh/total_lf)*100:.2f}")
+          PY
+          )
             echo "Coverage: ${pct}% (${total_lh}/${total_lf})"
             # Temporairement désactivé - awk "BEGIN { exit (${pct} >= 50.0 ? 0 : 1) }"
             echo "Coverage check temporarily disabled"

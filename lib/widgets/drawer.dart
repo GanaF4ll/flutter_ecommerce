@@ -43,26 +43,35 @@ class AppDrawer extends StatelessWidget {
               style: TextStyle(color: Colors.white, fontSize: 24),
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.home, color: Colors.cyan),
-            title: const Text('Accueil'),
-            onTap: () => _go(context, '/'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.euro_outlined, color: Colors.cyan),
-            title: const Text('Catalogue'),
-            onTap: () => _go(context, '/catalog'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.shopping_cart, color: Colors.cyan),
-            title: const Text('Panier'),
-            onTap: () => _go(context, '/cart'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.favorite, color: Colors.pink),
-            title: const Text('Favoris'),
-            onTap: () => _go(context, '/favorites'),
-          ),
+          // Afficher les éléments principaux seulement si l'utilisateur est connecté
+          if (isLoggedIn) ...[
+            ListTile(
+              leading: const Icon(Icons.home, color: Colors.cyan),
+              title: const Text('Accueil'),
+              onTap: () => _go(context, '/'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.euro_outlined, color: Colors.cyan),
+              title: const Text('Catalogue'),
+              onTap: () => _go(context, '/catalog'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.shopping_cart, color: Colors.cyan),
+              title: const Text('Panier'),
+              onTap: () => _go(context, '/cart'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.favorite, color: Colors.pink),
+              title: const Text('Favoris'),
+              onTap: () => _go(context, '/favorites'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Se déconnecter'),
+              onTap: () => _logout(context),
+            ),
+          ],
           // Afficher login/register seulement si l'utilisateur n'est pas connecté
           if (!isLoggedIn) ...[
             ListTile(
@@ -76,13 +85,6 @@ class AppDrawer extends StatelessWidget {
               onTap: () => _go(context, '/register'),
             ),
           ],
-          // Afficher logout seulement si l'utilisateur est connecté
-          if (isLoggedIn)
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Se déconnecter'),
-              onTap: () => _logout(context),
-            ),
         ],
       ),
     );

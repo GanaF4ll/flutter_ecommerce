@@ -9,7 +9,13 @@ class AuthGuard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    User? user;
+    try {
+      user = FirebaseAuth.instance.currentUser;
+    } catch (_) {
+      // Firebase non initialisé (en tests par ex.) → considérer comme non authentifié
+      user = null;
+    }
 
     // Vérifier si l'utilisateur est authentifié
     if (user != null) {

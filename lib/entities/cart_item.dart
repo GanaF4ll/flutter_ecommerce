@@ -7,7 +7,8 @@ class CartItem {
 
   const CartItem({this.id, required this.product, required this.quantity});
 
-  double get totalPrice => product.price * quantity;
+  double get totalPrice =>
+      double.parse((product.price * quantity).toStringAsFixed(2));
 
   Map<String, dynamic> toMap() {
     return {'id': id, 'product_id': product.id, 'quantity': quantity};
@@ -23,5 +24,22 @@ class CartItem {
       product: product ?? this.product,
       quantity: quantity ?? this.quantity,
     );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CartItem &&
+        other.id == id &&
+        other.product.id == product.id &&
+        other.quantity == quantity;
+  }
+
+  @override
+  int get hashCode => Object.hash(id, product.id, quantity);
+
+  @override
+  String toString() {
+    return 'CartItem(id: ${id?.toString() ?? 'null'}, productId: ${product.id}, quantity: $quantity)';
   }
 }

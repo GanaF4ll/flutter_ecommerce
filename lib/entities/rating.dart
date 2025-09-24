@@ -14,4 +14,7 @@ class Rating {
   Map<String, dynamic> toJson() {
     return {'rate': rate, 'count': count};
   }
+
+  @override
+  String toString() => 'Rating(rate: $rate, count: $count)';
 }

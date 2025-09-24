@@ -1,14 +1,16 @@
 import 'package:flutter_ecommerce/entities/cart_item.dart';
+import 'package:flutter_ecommerce/repositories/cart_repository_interface.dart';
 import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:sqflite/sqlite_api.dart';
 
-class CartRepository {
+class CartRepository implements CartRepositoryInterface {
   final Database database;
   final ProductRepository productRepository;
 
   CartRepository({required this.database, required this.productRepository});
 
   // Ajouter un produit au panier
+  @override
   Future<int> addToCart(int productId, int quantity) async {
     // Vérifier si le produit existe déjà dans le panier
     final existingItem = await getCartItemByProductId(productId);
@@ -29,6 +31,7 @@ class CartRepository {
   }
 
   // Récupérer tous les items du panier
+  @override
   Future<List<CartItem>> getCartItems() async {
     final List<Map<String, dynamic>> cartMaps = await database.query('cart');
     List<CartItem> cartItems = [];
@@ -49,6 +52,7 @@ class CartRepository {
   }
 
   // Récupérer un item du panier par ID de produit
+  @override
   Future<CartItem?> getCartItemByProductId(int productId) async {
     final List<Map<String, dynamic>> cartMaps = await database.query(
       'cart',
@@ -70,6 +74,7 @@ class CartRepository {
   }
 
   // Mettre à jour la quantité d'un item
+  @override
   Future<int> updateCartItemQuantity(int cartItemId, int newQuantity) async {
     if (newQuantity <= 0) {
       return removeFromCart(cartItemId);
@@ -84,16 +89,19 @@ class CartRepository {
   }
 
   // Supprimer un item du panier
+  @override
   Future<int> removeFromCart(int cartItemId) async {
     return database.delete('cart', where: 'id = ?', whereArgs: [cartItemId]);
   }
 
   // Vider le panier
+  @override
   Future<int> clearCart() async {
     return database.delete('cart');
   }
 
   // Récupérer le nombre total d'items dans le panier
+  @override
   Future<int> getCartItemCount() async {
     final result = await database.rawQuery(
       'SELECT SUM(quantity) as total FROM cart',
@@ -102,6 +110,7 @@ class CartRepository {
   }
 
   // Récupérer le prix total du panier
+  @override
   Future<double> getCartTotal() async {
     final cartItems = await getCartItems();
     return cartItems.fold<double>(0.0, (sum, item) => sum + item.totalPrice);

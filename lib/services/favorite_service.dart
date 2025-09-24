@@ -1,11 +1,11 @@
 import 'package:flutter_ecommerce/entities/favorite.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
-import 'package:flutter_ecommerce/repositories/favorite_repository.dart';
+import 'package:flutter_ecommerce/repositories/favorite_repository_interface.dart';
 
 class FavoriteService {
-  final FavoriteRepository _favoriteRepository;
+  final FavoriteRepositoryInterface _favoriteRepository;
 
-  FavoriteService({required FavoriteRepository favoriteRepository})
+  FavoriteService({required FavoriteRepositoryInterface favoriteRepository})
     : _favoriteRepository = favoriteRepository;
 
   /// Ajouter un produit aux favoris

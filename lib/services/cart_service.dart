@@ -1,11 +1,11 @@
 import 'package:flutter_ecommerce/entities/cart_item.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
-import 'package:flutter_ecommerce/repositories/cart_repository.dart';
+import 'package:flutter_ecommerce/repositories/cart_repository_interface.dart';
 
 class CartService {
-  final CartRepository _cartRepository;
+  final CartRepositoryInterface _cartRepository;
 
-  CartService({required CartRepository cartRepository})
+  CartService({required CartRepositoryInterface cartRepository})
     : _cartRepository = cartRepository;
 
   /// Ajouter un produit au panier

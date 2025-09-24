@@ -1,14 +1,16 @@
 import 'package:flutter_ecommerce/entities/favorite.dart';
+import 'package:flutter_ecommerce/repositories/favorite_repository_interface.dart';
 import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:sqflite/sqlite_api.dart';
 
-class FavoriteRepository {
+class FavoriteRepository implements FavoriteRepositoryInterface {
   final Database database;
   final ProductRepository productRepository;
 
   FavoriteRepository({required this.database, required this.productRepository});
 
   // Ajouter un produit aux favoris
+  @override
   Future<int> addToFavorites(int productId) async {
     // Vérifier si le produit n'est pas déjà en favoris
     final existingFavorite = await getFavoriteByProductId(productId);
@@ -26,6 +28,7 @@ class FavoriteRepository {
   }
 
   // Supprimer un produit des favoris
+  @override
   Future<int> removeFromFavorites(int productId) async {
     return database.delete(
       'favorites',
@@ -35,6 +38,7 @@ class FavoriteRepository {
   }
 
   // Vérifier si un produit est en favoris
+  @override
   Future<bool> isFavorite(int productId) async {
     final result = await database.query(
       'favorites',
@@ -45,6 +49,7 @@ class FavoriteRepository {
   }
 
   // Récupérer un favori par ID de produit
+  @override
   Future<Favorite?> getFavoriteByProductId(int productId) async {
     final List<Map<String, dynamic>> favoriteMaps = await database.query(
       'favorites',
@@ -66,6 +71,7 @@ class FavoriteRepository {
   }
 
   // Récupérer tous les favoris
+  @override
   Future<List<Favorite>> getFavorites() async {
     final List<Map<String, dynamic>> favoriteMaps = await database.query(
       'favorites',
@@ -93,11 +99,13 @@ class FavoriteRepository {
   }
 
   // Vider tous les favoris
+  @override
   Future<int> clearFavorites() async {
     return database.delete('favorites');
   }
 
   // Récupérer le nombre total de favoris
+  @override
   Future<int> getFavoriteCount() async {
     final result = await database.rawQuery(
       'SELECT COUNT(*) as total FROM favorites',
@@ -106,6 +114,7 @@ class FavoriteRepository {
   }
 
   // Basculer l'état favori d'un produit (ajouter si pas présent, supprimer si présent)
+  @override
   Future<bool> toggleFavorite(int productId) async {
     final isCurrentlyFavorite = await isFavorite(productId);
 

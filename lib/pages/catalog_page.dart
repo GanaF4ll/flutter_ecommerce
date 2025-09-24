@@ -52,7 +52,12 @@ class _CatalogPageState extends State<CatalogPage> {
   Widget build(BuildContext context) {
     return AuthGuard(
       child: Scaffold(
-        appBar: AppBar(),
+        appBar: AppBar(
+          title: const Text('Catalogue'),
+          backgroundColor: Colors.cyan,
+          foregroundColor: Colors.white,
+        ),
+
         drawer: const AppDrawer(),
         body: Column(
           children: [
@@ -72,13 +77,14 @@ class _CatalogPageState extends State<CatalogPage> {
                     return const Center(child: Text('No products found'));
                   } else {
                     return GridView.builder(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(16),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            childAspectRatio: 0.78,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
+                            childAspectRatio:
+                                0.7, // Ajusté pour mieux afficher les titres
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
                           ),
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {

@@ -1,11 +1,15 @@
 name: Deploy to Firebase Hosting on merge
 on:
-  push:
+  workflow_run:
+    workflows: ["Flutter CI"]
+    types:
+      - completed
     branches:
-      - prod
+      - main
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2

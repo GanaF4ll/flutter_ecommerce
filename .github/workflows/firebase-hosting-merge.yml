@@ -1,15 +1,46 @@
-name: Deploy to Firebase Hosting on merge
+name: CI/CD Pipeline - Test and Deploy to Firebase
 on:
-  workflow_run:
-    workflows: ["Flutter CI"]
-    types:
-      - completed
+  push:
     branches:
       - main
 jobs:
-  build_and_deploy:
+  test:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Format code
+        run: dart format .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov.info
+          path: coverage/lcov.info
+        if: always()
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2

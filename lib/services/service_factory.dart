@@ -30,8 +30,7 @@ class ServiceFactory {
   static Future<ProductService> getProductService() async {
     if (_productService != null) return _productService!;
 
-    final productRepository = await RepositoryFactory.getProductRepository();
-    _productService = ProductService(productRepository: productRepository);
+    _productService = ProductService();
     return _productService!;
   }
 

@@ -6,7 +6,7 @@ class FavoriteService {
   final FavoriteRepositoryInterface _favoriteRepository;
 
   FavoriteService({required FavoriteRepositoryInterface favoriteRepository})
-    : _favoriteRepository = favoriteRepository;
+      : _favoriteRepository = favoriteRepository;
 
   /// Ajouter un produit aux favoris
   Future<bool> addProductToFavorites(Product product) async {

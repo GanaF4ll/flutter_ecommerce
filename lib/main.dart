@@ -89,7 +89,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Drawer Demo',
+      title: 'Flutter E-Commerce Gana',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.cyan, useMaterial3: true),
       initialRoute: '/',

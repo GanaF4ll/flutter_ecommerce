@@ -174,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed:
                     _isLoading ? null : _signIn, // Désactivé pendant chargement
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: Colors.purple,
                   foregroundColor: Colors.white,
                 ),
                 child: _isLoading

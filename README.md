@@ -2,6 +2,11 @@
 
 Une application e-commerce complète développée avec Flutter, supportant les plateformes mobile et web avec Firebase pour l'authentification.
 
+## Hébergement
+
+Version web hébergée sur Firebase Hosting
+https://flutterecommerce-fc124.firebaseapp.com/#/catalog
+
 ## Fonctionnalités
 
 - 🛍️ Catalogue de produits avec recherche et filtres

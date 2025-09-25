@@ -6,7 +6,7 @@ class CartService {
   final CartRepositoryInterface _cartRepository;
 
   CartService({required CartRepositoryInterface cartRepository})
-    : _cartRepository = cartRepository;
+      : _cartRepository = cartRepository;
 
   /// Ajouter un produit au panier
   Future<bool> addProductToCart(Product product, {int quantity = 1}) async {

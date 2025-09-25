@@ -2,14 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
-import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:http/http.dart' as http;
 
 class ProductService {
-  final ProductRepository? _productRepository;
-
-  ProductService({ProductRepository? productRepository})
-      : _productRepository = productRepository;
+  ProductService();
   Future<http.Response> fetchProducts() {
     return http.get(Uri.parse('https://fakestoreapi.com/products'));
   }

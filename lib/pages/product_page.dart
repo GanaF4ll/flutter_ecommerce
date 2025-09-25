@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
 import 'package:flutter_ecommerce/guards/auth_guard.dart';
-import 'package:flutter_ecommerce/repositories/cart_repository.dart';
-import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:flutter_ecommerce/services/cart_service.dart';
-import 'package:path/path.dart' as path;
-import 'package:sqflite/sqflite.dart';
+import 'package:flutter_ecommerce/services/service_factory.dart';
 
 class ProductPage extends StatefulWidget {
   final String id;
@@ -18,7 +15,6 @@ class ProductPage extends StatefulWidget {
 
 class _ProductPageState extends State<ProductPage> {
   late Future<Product> futureProduct;
-  final ProductRepository _productRepository = ProductRepository();
   bool _isInitialized = false;
   bool _isLoading = false;
   late CartService _cartService;
@@ -29,36 +25,25 @@ class _ProductPageState extends State<ProductPage> {
     super.initState();
     futureProduct = fetchLocalProductById(widget.id);
     _initializeCartService();
-    // futureProduct = fetchProductById(widget.id);
   }
 
   Future<void> _initializeCartService() async {
     try {
-      final database = await openDatabase(
-        path.join(await getDatabasesPath(), 'cart_database.db'),
-        version: 1,
-        onCreate: (db, version) {
-          return db.execute(
-            'CREATE TABLE cart (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, quantity INTEGER)',
-          );
-        },
-      );
-      final productRepository = ProductRepository();
-      final cartRepository = CartRepository(
-        database: database,
-        productRepository: productRepository,
-      );
-      _cartService = CartService(cartRepository: cartRepository);
+      _cartService = await ServiceFactory.getCartService();
       setState(() {
         _isInitialized = true;
       });
     } catch (e) {
       // Erreur d'initialisation du cart service: $e
+      setState(() {
+        _isInitialized = true; // Même en cas d'erreur, continuer
+      });
     }
   }
 
   Future<Product> fetchLocalProductById(String id) async {
-    return await _productRepository.fetchLocalProductById(id);
+    final productService = await ServiceFactory.getProductService();
+    return await productService.getProductById(id);
   }
   // Future<Product> fetchProductById(String id) async {
   //   return await _productRepository.fetchProductById(id);
@@ -144,7 +129,9 @@ class _ProductPageState extends State<ProductPage> {
                     // Titre du produit
                     Text(
                       product.title,
-                      style: Theme.of(context).textTheme.headlineSmall
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
@@ -152,11 +139,11 @@ class _ProductPageState extends State<ProductPage> {
                     // Prix
                     Text(
                       '${product.price} €',
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            color: Colors.cyan,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: Colors.cyan,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                     const SizedBox(height: 16),
 
@@ -185,8 +172,8 @@ class _ProductPageState extends State<ProductPage> {
                       Text(
                         'Description',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -202,8 +189,8 @@ class _ProductPageState extends State<ProductPage> {
                       Text(
                         'Évaluation',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -225,9 +212,8 @@ class _ProductPageState extends State<ProductPage> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _isInitialized && !_isLoading
-                            ? _addToCart
-                            : null,
+                        onPressed:
+                            _isInitialized && !_isLoading ? _addToCart : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,

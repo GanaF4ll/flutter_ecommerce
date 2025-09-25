@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
 import 'package:flutter_ecommerce/guards/auth_guard.dart';
-import 'package:flutter_ecommerce/repositories/product_repository.dart';
+import 'package:flutter_ecommerce/repositories/repository_factory.dart';
 import 'package:flutter_ecommerce/widgets/drawer.dart';
 import 'package:flutter_ecommerce/widgets/product_card.dart';
 import 'package:flutter_ecommerce/widgets/product_filter.dart';
+import 'package:flutter_ecommerce/widgets/responsive_layout.dart';
 
 class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
@@ -15,14 +16,14 @@ class CatalogPage extends StatefulWidget {
 
 class _CatalogPageState extends State<CatalogPage> {
   late Future<List<Product>> futureProducts;
-  final ProductRepository _productRepository = ProductRepository();
+  late Future<dynamic> _productRepository;
   String? selectedCategory;
 
   @override
   void initState() {
     super.initState();
+    _productRepository = RepositoryFactory.getProductRepository();
     futureProducts = fetchLocalProducts();
-    // futureProducts = fetchProducts();
   }
 
   void onCategoryChanged(String? category) {
@@ -37,15 +38,18 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   Future<List<Product>> fetchProducts() async {
-    return await _productRepository.fetchProducts();
+    final repo = await _productRepository;
+    return await repo.fetchProducts();
   }
 
   Future<List<Product>> fetchLocalProducts() async {
-    return await _productRepository.fetchLocalProducts();
+    final repo = await _productRepository;
+    return await repo.fetchLocalProducts();
   }
 
   Future<List<Product>> fetchLocalProductsByCategory(String category) async {
-    return await _productRepository.fetchLocalProductsByCategory(category);
+    final repo = await _productRepository;
+    return await repo.fetchLocalProductsByCategory(category);
   }
 
   @override
@@ -57,7 +61,6 @@ class _CatalogPageState extends State<CatalogPage> {
           backgroundColor: Colors.cyan,
           foregroundColor: Colors.white,
         ),
-
         drawer: const AppDrawer(),
         body: Column(
           children: [
@@ -76,20 +79,13 @@ class _CatalogPageState extends State<CatalogPage> {
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text('No products found'));
                   } else {
-                    return GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio:
-                                0.7, // Ajusté pour mieux afficher les titres
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                          ),
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        return ProductCard(product: snapshot.data![index]);
-                      },
+                    return ResponsiveContainer(
+                      child: ResponsiveGridView(
+                        childAspectRatio: 0.7,
+                        children: snapshot.data!
+                            .map((product) => ProductCard(product: product))
+                            .toList(),
+                      ),
                     );
                   }
                 },

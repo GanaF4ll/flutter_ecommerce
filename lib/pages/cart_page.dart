@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/entities/cart_item.dart';
 import 'package:flutter_ecommerce/guards/auth_guard.dart';
-import 'package:flutter_ecommerce/repositories/cart_repository.dart';
-import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:flutter_ecommerce/services/cart_service.dart';
+import 'package:flutter_ecommerce/services/service_factory.dart';
 import 'package:flutter_ecommerce/widgets/cart_item_card.dart';
 import 'package:flutter_ecommerce/widgets/drawer.dart';
-import 'package:path/path.dart' as path;
-import 'package:sqflite/sqflite.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -18,7 +15,7 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   late CartService _cartService;
-  late Future<List<CartItem>> _cartItems;
+  Future<List<CartItem>>? _cartItems;
   bool _isLoading = true;
 
   @override
@@ -29,18 +26,13 @@ class _CartPageState extends State<CartPage> {
 
   Future<void> _initializeCart() async {
     try {
-      final database = await openDatabase(
-        path.join(await getDatabasesPath(), 'cart_database.db'),
-      );
-      final productRepository = ProductRepository();
-      final cartRepository = CartRepository(
-        database: database,
-        productRepository: productRepository,
-      );
-      _cartService = CartService(cartRepository: cartRepository);
+      _cartService = await ServiceFactory.getCartService();
       _loadCartItems();
     } catch (e) {
       // Erreur d'initialisation du panier: $e
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -128,124 +120,128 @@ class _CartPageState extends State<CartPage> {
           ],
         ),
         drawer: const AppDrawer(),
-        body: FutureBuilder<List<CartItem>>(
-          future: _cartItems,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+        body: _cartItems == null
+            ? const Center(child: Text('Erreur de chargement'))
+            : FutureBuilder<List<CartItem>>(
+                future: _cartItems!,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-            if (snapshot.hasError) {
-              return Center(child: Text('Erreur: ${snapshot.error}'));
-            }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Erreur: ${snapshot.error}'));
+                  }
 
-            final cartItems = snapshot.data ?? [];
+                  final cartItems = snapshot.data ?? [];
 
-            if (cartItems.isEmpty) {
-              return const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.shopping_cart_outlined,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Votre panier est vide',
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Ajoutez des produits pour commencer vos achats',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            double total = cartItems.fold(
-              0.0,
-              (sum, item) => sum + item.totalPrice,
-            );
-
-            return Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: cartItems.length,
-                    itemBuilder: (context, index) {
-                      final item = cartItems[index];
-                      return CartItemCard(
-                        item: item,
-                        onRemove: () => _removeItem(item),
-                        onUpdateQuantity: (newQuantity) =>
-                            _updateQuantity(item, newQuantity),
-                      );
-                    },
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    border: Border(top: BorderSide(color: Colors.grey[300]!)),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  if (cartItems.isEmpty) {
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
-                            'Total:',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Icon(
+                            Icons.shopping_cart_outlined,
+                            size: 64,
+                            color: Colors.grey,
                           ),
+                          SizedBox(height: 16),
                           Text(
-                            '${total.toStringAsFixed(2)} €',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
+                            'Votre panier est vide',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Ajoutez des produits pour commencer vos achats',
+                            style: TextStyle(color: Colors.grey),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Fonctionnalité de commande à venir !',
-                                ),
-                              ),
+                    );
+                  }
+
+                  double total = cartItems.fold(
+                    0.0,
+                    (sum, item) => sum + item.totalPrice,
+                  );
+
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: cartItems.length,
+                          itemBuilder: (context, index) {
+                            final item = cartItems[index];
+                            return CartItemCard(
+                              item: item,
+                              onRemove: () => _removeItem(item),
+                              onUpdateQuantity: (newQuantity) =>
+                                  _updateQuantity(item, newQuantity),
                             );
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child: const Text(
-                            'Passer la commande',
-                            style: TextStyle(fontSize: 18),
-                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          border:
+                              Border(top: BorderSide(color: Colors.grey[300]!)),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Total:',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '${total.toStringAsFixed(2)} €',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Fonctionnalité de commande à venir !',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                                child: const Text(
+                                  'Passer la commande',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+                  );
+                },
+              ),
       ),
     );
   }

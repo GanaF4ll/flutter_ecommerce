@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
 import 'package:flutter_ecommerce/guards/auth_guard.dart';
 import 'package:flutter_ecommerce/services/product_service.dart';
 import 'package:flutter_ecommerce/widgets/drawer.dart';
 import 'package:flutter_ecommerce/widgets/product_card.dart';
+import 'package:flutter_ecommerce/widgets/responsive_layout.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -60,22 +62,24 @@ class _HomePageState extends State<HomePage> {
         drawer: const AppDrawer(),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Banner principal
-                    _buildHeroBanner(),
+            : ResponsiveContainer(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Banner principal
+                      _buildHeroBanner(),
 
-                    // Barre de recherche
-                    _buildSearchBar(),
+                      // Barre de recherche
+                      _buildSearchBar(),
 
-                    // Section des catégories
-                    _buildCategoriesSection(),
+                      // Section des catégories
+                      _buildCategoriesSection(),
 
-                    // Section des produits vedettes
-                    _buildFeaturedProductsSection(),
-                  ],
+                      // Section des produits vedettes
+                      _buildFeaturedProductsSection(),
+                    ],
+                  ),
                 ),
               ),
       ),
@@ -164,17 +168,26 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 100,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final category = _categories[index];
-                return _buildCategoryCard(category);
-              },
-            ),
-          ),
+          // Adapter l'affichage des catégories selon la plateforme
+          kIsWeb && MediaQuery.of(context).size.width > 800
+              ? Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: _categories
+                      .map((category) => _buildCategoryCard(category))
+                      .toList(),
+                )
+              : SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _categories.length,
+                    itemBuilder: (context, index) {
+                      final category = _categories[index];
+                      return _buildCategoryCard(category);
+                    },
+                  ),
+                ),
         ],
       ),
     );
@@ -261,19 +274,37 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio:
-                  0.7, // Ratio ajusté pour éliminer les débordements
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _featuredProducts.length,
-            itemBuilder: (context, index) {
-              return ProductCard(product: _featuredProducts[index]);
+          LayoutBuilder(
+            builder: (context, constraints) {
+              int crossAxisCount;
+
+              // Adapter le nombre de colonnes selon la largeur
+              if (constraints.maxWidth > 1400) {
+                crossAxisCount = 6;
+              } else if (constraints.maxWidth > 1200) {
+                crossAxisCount = 5;
+              } else if (constraints.maxWidth > 900) {
+                crossAxisCount = 4;
+              } else if (constraints.maxWidth > 600) {
+                crossAxisCount = 3;
+              } else {
+                crossAxisCount = 2;
+              }
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  childAspectRatio: 0.7,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: _featuredProducts.length,
+                itemBuilder: (context, index) {
+                  return ProductCard(product: _featuredProducts[index]);
+                },
+              );
             },
           ),
         ],

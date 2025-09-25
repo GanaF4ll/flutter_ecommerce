@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
 import 'package:flutter_ecommerce/repositories/cart_repository.dart';
@@ -183,6 +184,7 @@ class _ProductCardState extends State<ProductCard> {
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
+      elevation: kIsWeb ? 2 : 1,
       child: InkWell(
         onTap: () =>
             Navigator.pushNamed(context, '/product/${widget.product.id}'),

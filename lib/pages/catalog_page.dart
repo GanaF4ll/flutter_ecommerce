@@ -5,6 +5,7 @@ import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:flutter_ecommerce/widgets/drawer.dart';
 import 'package:flutter_ecommerce/widgets/product_card.dart';
 import 'package:flutter_ecommerce/widgets/product_filter.dart';
+import 'package:flutter_ecommerce/widgets/responsive_layout.dart';
 
 class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
@@ -57,7 +58,6 @@ class _CatalogPageState extends State<CatalogPage> {
           backgroundColor: Colors.cyan,
           foregroundColor: Colors.white,
         ),
-
         drawer: const AppDrawer(),
         body: Column(
           children: [
@@ -76,20 +76,13 @@ class _CatalogPageState extends State<CatalogPage> {
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text('No products found'));
                   } else {
-                    return GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio:
-                                0.7, // Ajusté pour mieux afficher les titres
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                          ),
-                      itemCount: snapshot.data!.length,
-                      itemBuilder: (context, index) {
-                        return ProductCard(product: snapshot.data![index]);
-                      },
+                    return ResponsiveContainer(
+                      child: ResponsiveGridView(
+                        childAspectRatio: 0.7,
+                        children: snapshot.data!
+                            .map((product) => ProductCard(product: product))
+                            .toList(),
+                      ),
                     );
                   }
                 },

@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
 import 'package:flutter_ecommerce/guards/auth_guard.dart';
-import 'package:flutter_ecommerce/services/product_service.dart';
+import 'package:flutter_ecommerce/services/service_factory.dart';
 import 'package:flutter_ecommerce/widgets/drawer.dart';
 import 'package:flutter_ecommerce/widgets/product_card.dart';
 import 'package:flutter_ecommerce/widgets/responsive_layout.dart';
@@ -15,7 +15,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final ProductService _productService = ProductService();
   List<Product> _featuredProducts = [];
   List<Map<String, String>> _categories = [];
   bool _isLoading = true;
@@ -29,8 +28,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadData() async {
     try {
       // Charger les produits vedettes (premiers 6 produits)
-      final products = await _productService.getProducts();
-      final categories = await _productService.getCategories();
+      final productService = await ServiceFactory.getProductService();
+      final products = await productService.getProducts();
+      final categories = await productService.getCategories();
 
       setState(() {
         _featuredProducts = products.take(6).toList();

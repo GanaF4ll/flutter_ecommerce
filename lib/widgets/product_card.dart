@@ -1,13 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
-import 'package:flutter_ecommerce/repositories/cart_repository.dart';
-import 'package:flutter_ecommerce/repositories/favorite_repository.dart';
-import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:flutter_ecommerce/services/cart_service.dart';
 import 'package:flutter_ecommerce/services/favorite_service.dart';
-import 'package:path/path.dart' as path;
-import 'package:sqflite/sqflite.dart';
+import 'package:flutter_ecommerce/services/service_factory.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -34,45 +30,9 @@ class _ProductCardState extends State<ProductCard> {
 
   Future<void> _initializeServices() async {
     try {
-      // Base de données pour le panier
-      final cartDatabase = await openDatabase(
-        path.join(await getDatabasesPath(), 'cart_database.db'),
-        version: 1,
-        onCreate: (db, version) {
-          return db.execute(
-            'CREATE TABLE cart (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, quantity INTEGER)',
-          );
-        },
-      );
-
-      // Base de données pour les favoris
-      final favoritesDatabase = await openDatabase(
-        path.join(await getDatabasesPath(), 'favorites_database.db'),
-        version: 1,
-        onCreate: (db, version) {
-          return db.execute(
-            'CREATE TABLE favorites (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, added_at TEXT)',
-          );
-        },
-      );
-
-      final productRepository = ProductRepository();
-
-      // Initialiser le service panier
-      final cartRepository = CartRepository(
-        database: cartDatabase,
-        productRepository: productRepository,
-      );
-      _cartService = CartService(cartRepository: cartRepository);
-
-      // Initialiser le service favoris
-      final favoriteRepository = FavoriteRepository(
-        database: favoritesDatabase,
-        productRepository: productRepository,
-      );
-      _favoriteService = FavoriteService(
-        favoriteRepository: favoriteRepository,
-      );
+      // Initialiser les services via les factory
+      _cartService = await ServiceFactory.getCartService();
+      _favoriteService = await ServiceFactory.getFavoriteService();
 
       // Vérifier si le produit est en favoris
       final isFavorite = await _favoriteService.isProductFavorite(
@@ -85,6 +45,9 @@ class _ProductCardState extends State<ProductCard> {
       });
     } catch (e) {
       // Erreur d'initialisation des services: $e
+      setState(() {
+        _isInitialized = true; // Même en cas d'erreur, marquer comme initialisé
+      });
     }
   }
 

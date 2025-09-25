@@ -2,9 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
+import 'package:flutter_ecommerce/repositories/product_repository.dart';
 import 'package:http/http.dart' as http;
 
 class ProductService {
+  final ProductRepository? _productRepository;
+
+  ProductService({ProductRepository? productRepository})
+      : _productRepository = productRepository;
   Future<http.Response> fetchProducts() {
     return http.get(Uri.parse('https://fakestoreapi.com/products'));
   }
@@ -62,9 +67,8 @@ class ProductService {
     String jsonString = await rootBundle.loadString('lib/data/products.json');
     Map<String, dynamic> jsonData = json.decode(jsonString);
     List<dynamic> products = jsonData['products'];
-    List<dynamic> productsByCategory = products
-        .where((product) => product['category'] == category)
-        .toList();
+    List<dynamic> productsByCategory =
+        products.where((product) => product['category'] == category).toList();
     return json.encode(productsByCategory);
   }
 

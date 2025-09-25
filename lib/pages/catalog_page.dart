@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/entities/product.dart';
 import 'package:flutter_ecommerce/guards/auth_guard.dart';
-import 'package:flutter_ecommerce/repositories/product_repository.dart';
+import 'package:flutter_ecommerce/repositories/repository_factory.dart';
 import 'package:flutter_ecommerce/widgets/drawer.dart';
 import 'package:flutter_ecommerce/widgets/product_card.dart';
 import 'package:flutter_ecommerce/widgets/product_filter.dart';
@@ -16,14 +16,14 @@ class CatalogPage extends StatefulWidget {
 
 class _CatalogPageState extends State<CatalogPage> {
   late Future<List<Product>> futureProducts;
-  final ProductRepository _productRepository = ProductRepository();
+  late Future<dynamic> _productRepository;
   String? selectedCategory;
 
   @override
   void initState() {
     super.initState();
+    _productRepository = RepositoryFactory.getProductRepository();
     futureProducts = fetchLocalProducts();
-    // futureProducts = fetchProducts();
   }
 
   void onCategoryChanged(String? category) {
@@ -38,15 +38,18 @@ class _CatalogPageState extends State<CatalogPage> {
   }
 
   Future<List<Product>> fetchProducts() async {
-    return await _productRepository.fetchProducts();
+    final repo = await _productRepository;
+    return await repo.fetchProducts();
   }
 
   Future<List<Product>> fetchLocalProducts() async {
-    return await _productRepository.fetchLocalProducts();
+    final repo = await _productRepository;
+    return await repo.fetchLocalProducts();
   }
 
   Future<List<Product>> fetchLocalProductsByCategory(String category) async {
-    return await _productRepository.fetchLocalProductsByCategory(category);
+    final repo = await _productRepository;
+    return await repo.fetchLocalProductsByCategory(category);
   }
 
   @override

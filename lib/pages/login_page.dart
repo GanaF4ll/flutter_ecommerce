@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/drawer.dart';
+import '../widgets/responsive_layout.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -101,6 +102,140 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Widget pour le formulaire de connexion mobile
+  Widget _buildMobileLayout() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icône de connexion
+          Icon(Icons.account_circle, size: 100, color: Colors.cyan),
+          const SizedBox(height: 30),
+          _buildLoginForm(),
+        ],
+      ),
+    );
+  }
+
+  // Widget pour le formulaire de connexion tablette/web
+  Widget _buildDesktopLayout() {
+    return Center(
+      child: ResponsiveContainer(
+        maxWidth: 400,
+        child: Card(
+          elevation: 8,
+          margin: const EdgeInsets.all(16),
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône et titre
+                Icon(Icons.account_circle, size: 80, color: Colors.cyan),
+                const SizedBox(height: 16),
+                Text(
+                  'Connexion',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.cyan,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 32),
+                _buildLoginForm(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Formulaire de connexion réutilisable
+  Widget _buildLoginForm() {
+    return Column(
+      children: [
+        // 🔥 AJOUT : Champ email avec validation
+        TextField(
+          controller: _emailController,
+          decoration: const InputDecoration(
+            labelText: 'Email',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.email),
+          ),
+          keyboardType: TextInputType.emailAddress,
+          enabled: !_isLoading, // Désactivé pendant le chargement
+        ),
+        const SizedBox(height: 16),
+
+        // 🔥 AJOUT : Champ mot de passe
+        TextField(
+          controller: _passwordController,
+          decoration: const InputDecoration(
+            labelText: 'Mot de passe',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.lock),
+          ),
+          obscureText: true, // Cache le texte
+          enabled: !_isLoading,
+          onSubmitted: (_) => _signIn(), // Connexion avec Entrée
+        ),
+        const SizedBox(height: 24),
+
+        // 🔥 AJOUT : Affichage conditionnel des messages d'erreur
+        if (_errorMessage.isNotEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red[100],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red[300]!),
+            ),
+            child: Text(
+              _errorMessage,
+              style: TextStyle(color: Colors.red[700]),
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+        if (_errorMessage.isNotEmpty) const SizedBox(height: 16),
+
+        // 🔥 AJOUT : Bouton de connexion avec état de chargement
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            onPressed:
+                _isLoading ? null : _signIn, // Désactivé pendant chargement
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.cyan,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: _isLoading
+                ? const CircularProgressIndicator(color: Colors.white)
+                : const Text(
+                    'Se connecter',
+                    style: TextStyle(fontSize: 16),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // 🔥 AJOUT : Lien vers la page d'inscription
+        TextButton(
+          onPressed: _isLoading
+              ? null
+              : () => Navigator.pushReplacementNamed(context, '/register'),
+          child: const Text('Pas de compte ? S\'inscrire'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,94 +243,14 @@ class _LoginPageState extends State<LoginPage> {
         title: const Text('Connexion'),
         backgroundColor: Colors.cyan,
         foregroundColor: Colors.white,
+        centerTitle: true,
       ),
       // 🔥 AJOUT : Le drawer est accessible même depuis la page de connexion
       drawer: const AppDrawer(),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Icône de connexion
-            Icon(Icons.account_circle, size: 100, color: Colors.cyan),
-            const SizedBox(height: 30),
-
-            // 🔥 AJOUT : Champ email avec validation
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email),
-              ),
-              keyboardType: TextInputType.emailAddress,
-              enabled: !_isLoading, // Désactivé pendant le chargement
-            ),
-            const SizedBox(height: 16),
-
-            // 🔥 AJOUT : Champ mot de passe
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Mot de passe',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock),
-              ),
-              obscureText: true, // Cache le texte
-              enabled: !_isLoading,
-              onSubmitted: (_) => _signIn(), // Connexion avec Entrée
-            ),
-            const SizedBox(height: 24),
-
-            // 🔥 AJOUT : Affichage conditionnel des messages d'erreur
-            if (_errorMessage.isNotEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red[300]!),
-                ),
-                child: Text(
-                  _errorMessage,
-                  style: TextStyle(color: Colors.red[700]),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-            if (_errorMessage.isNotEmpty) const SizedBox(height: 16),
-
-            // 🔥 AJOUT : Bouton de connexion avec état de chargement
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed:
-                    _isLoading ? null : _signIn, // Désactivé pendant chargement
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyan,
-                  foregroundColor: Colors.white,
-                ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Se connecter',
-                        style: TextStyle(fontSize: 16),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 🔥 AJOUT : Lien vers la page d'inscription
-            TextButton(
-              onPressed: _isLoading
-                  ? null
-                  : () => Navigator.pushReplacementNamed(context, '/register'),
-              child: const Text('Pas de compte ? S\'inscrire'),
-            ),
-          ],
-        ),
+      body: ResponsiveLayout(
+        mobileLayout: _buildMobileLayout(),
+        tabletLayout: _buildDesktopLayout(),
+        webLayout: _buildDesktopLayout(),
       ),
     );
   }

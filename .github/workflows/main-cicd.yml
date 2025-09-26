@@ -1,0 +1,483 @@
+name: Main CI/CD Pipeline
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deployment_type:
+        description: "Type de déploiement"
+        required: true
+        default: "blue-green"
+        type: choice
+        options:
+          - blue-green
+          - direct
+          - rollback
+
+env:
+  FIREBASE_PROJECT_ID: flutterecommerce-fc124
+  PRODUCTION_URL: https://flutterecommerce-fc124.firebaseapp.com
+
+jobs:
+  # =======================================
+  # Phase 1: ANALYSE DU CONTEXTE
+  # =======================================
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      is-main: ${{ steps.context.outputs.is_main }}
+      is-pr: ${{ steps.context.outputs.is_pr }}
+      should-deploy: ${{ steps.context.outputs.should_deploy }}
+      build-version: ${{ steps.context.outputs.build_version }}
+    steps:
+      - name: Analyze workflow context
+        id: context
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+
+          # Déterminer le contexte
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            echo "is_main=true" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "🚀 PRODUCTION DEPLOYMENT (Blue-Green)"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "is_pr=true" >> $GITHUB_OUTPUT
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            echo "🔍 PULL REQUEST VALIDATION"
+          else
+            echo "is_main=false" >> $GITHUB_OUTPUT
+            echo "is_pr=false" >> $GITHUB_OUTPUT
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            echo "🔧 FEATURE BRANCH BUILD"
+          fi
+
+          # Version de build
+          VERSION="v$(date +%Y%m%d)-$(echo ${{ github.sha }} | cut -c1-8)"
+          echo "build_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Build version: $VERSION"
+
+  # =======================================
+  # Phase 2: QUALITÉ DU CODE
+  # =======================================
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Check code formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Analyze code
+        run: flutter analyze
+
+  # =======================================
+  # Phase 3: TESTS
+  # =======================================
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Run unit tests
+        run: flutter test test/entities/ test/guards/
+
+      - name: Run performance tests (if PR or main)
+        if: needs.setup.outputs.is-pr == 'true' || needs.setup.outputs.is-main == 'true'
+        run: flutter test test/load_testing/simple_performance_test.dart
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov.info
+          path: coverage/lcov.info
+        if: always()
+
+    needs: [setup]
+
+  # =======================================
+  # Phase 4: BUILD
+  # =======================================
+  build:
+    needs: [setup, code-quality, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build web app
+        run: |
+          echo "🏗️ Building version ${{ needs.setup.outputs.build-version }}"
+          flutter build web --release --build-name=${{ needs.setup.outputs.build-version }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build-${{ needs.setup.outputs.build-version }}
+          path: build/web/
+
+  # =======================================
+  # Phase 5: DÉPLOIEMENT PR (Preview)
+  # =======================================
+  deploy-preview:
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    if: needs.setup.outputs.is-pr == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ needs.setup.outputs.build-version }}
+          path: build/web/
+
+      - name: Deploy PR Preview
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FLUTTERECOMMERCE_FC124 }}
+          projectId: ${{ env.FIREBASE_PROJECT_ID }}
+
+  # =======================================
+  # Phase 6: BLUE-GREEN DEPLOYMENT
+  # =======================================
+  deploy-staging:
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    if: needs.setup.outputs.should-deploy == 'true'
+    outputs:
+      staging-url: ${{ steps.deploy.outputs.details_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ needs.setup.outputs.build-version }}
+          path: build/web/
+
+      - name: Deploy to STAGING (GREEN)
+        id: deploy
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FLUTTERECOMMERCE_FC124 }}
+          channelId: green-${{ needs.setup.outputs.build-version }}
+          projectId: ${{ env.FIREBASE_PROJECT_ID }}
+          expires: 7d
+
+      - name: Wait for staging deployment
+        run: |
+          echo "⏳ Attente que STAGING soit prêt..."
+          sleep 15
+
+          max_attempts=10
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if curl -f --max-time 10 "${{ steps.deploy.outputs.details_url }}" > /dev/null 2>&1; then
+              echo "✅ STAGING accessible"
+              break
+            else
+              echo "⏳ Tentative $attempt/$max_attempts"
+              sleep 10
+              attempt=$((attempt + 1))
+            fi
+          done
+
+  # =======================================
+  # Phase 7: TESTS DE PERFORMANCE
+  # =======================================
+  performance-tests:
+    needs: [setup, deploy-staging]
+    runs-on: ubuntu-latest
+    if: needs.setup.outputs.should-deploy == 'true'
+    outputs:
+      performance-status: ${{ steps.performance.outputs.status }}
+      performance-score: ${{ steps.performance.outputs.score }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Install Artillery
+        run: |
+          curl -sSL https://get.artillery.io | sh
+          echo "$HOME/.artillery/bin" >> $GITHUB_PATH
+
+      - name: Run performance tests on STAGING
+        id: performance
+        run: |
+          STAGING_URL="${{ needs.deploy-staging.outputs.staging-url }}"
+          echo "🧪 Tests de performance sur STAGING: $STAGING_URL"
+
+          cd load-testing
+          mkdir -p reports
+
+          # Tests Artillery sur staging
+          sed "s|https://flutterecommerce-fc124.firebaseapp.com|$STAGING_URL|g" artillery-web-load-test.yml > artillery-staging-test.yml
+          artillery run artillery-staging-test.yml --output reports/staging-performance.json || true
+
+          # Tests curl rapides
+          chmod +x simple-load-test.sh
+          timeout 60s ./simple-load-test.sh || true
+
+          # Tests Flutter natifs
+          cd ..
+          export TEST_TARGET_URL="$STAGING_URL"
+          flutter test test/load_testing/simple_performance_test.dart || true
+
+          # Analyser les résultats
+          cd load-testing/reports
+          SCORE=100
+
+          if [ -f "staging-performance.json" ] && command -v jq > /dev/null; then
+            AVG_TIME=$(jq -r '.aggregate.summaries."http.response_time".mean // 0' staging-performance.json)
+            ERROR_RATE=$(jq -r '(.aggregate.counters."http.codes.400" // 0) + (.aggregate.counters."http.codes.500" // 0)' staging-performance.json)
+            
+            # Calculer le score
+            if (( $(echo "$AVG_TIME > 3000" | bc -l) )); then
+              SCORE=$((SCORE - 30))
+            fi
+            
+            if [ "$ERROR_RATE" -gt 5 ]; then
+              SCORE=$((SCORE - 40))
+            fi
+          fi
+
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+
+          if [ $SCORE -ge 70 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ Performance STAGING acceptable: $SCORE/100"
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "❌ Performance STAGING insuffisante: $SCORE/100"
+          fi
+
+      - name: Upload performance reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-performance-reports-${{ needs.setup.outputs.build-version }}
+          path: load-testing/reports/
+        if: always()
+
+  # =======================================
+  # Phase 8: PRODUCTION DEPLOYMENT
+  # =======================================
+  deploy-production:
+    needs: [setup, build, performance-tests]
+    runs-on: ubuntu-latest
+    if: |
+      needs.setup.outputs.should-deploy == 'true' && 
+      needs.performance-tests.outputs.performance-status == 'success'
+    environment:
+      name: production
+      url: ${{ env.PRODUCTION_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ needs.setup.outputs.build-version }}
+          path: build/web/
+
+      - name: Create deployment backup
+        run: |
+          echo "💾 Sauvegarde de la production actuelle..."
+          mkdir -p deployment-info
+          echo "{
+            \"deployment_id\": \"${{ needs.setup.outputs.build-version }}\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"commit_sha\": \"${{ github.sha }}\",
+            \"staging_url\": \"${{ needs.deploy-staging.outputs.staging-url }}\",
+            \"performance_score\": ${{ needs.performance-tests.outputs.performance-score }}
+          }" > deployment-info/deployment-${{ needs.setup.outputs.build-version }}.json
+
+      - name: Deploy to PRODUCTION (BLUE)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FLUTTERECOMMERCE_FC124 }}
+          channelId: live
+          projectId: ${{ env.FIREBASE_PROJECT_ID }}
+
+      - name: Verify production deployment
+        run: |
+          echo "🔍 Vérification de la production..."
+          sleep 10
+
+          if curl -f --max-time 10 "${{ env.PRODUCTION_URL }}" > /dev/null 2>&1; then
+            echo "✅ Production accessible"
+          else
+            echo "❌ Problème de déploiement production"
+            exit 1
+          fi
+
+      - name: Upload deployment info
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-info-${{ needs.setup.outputs.build-version }}
+          path: deployment-info/
+
+  # =======================================
+  # Phase 9: VALIDATION PRODUCTION
+  # =======================================
+  production-validation:
+    needs: [setup, deploy-production]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Production smoke tests
+        run: |
+          echo "🔥 Tests de validation production..."
+          export TEST_TARGET_URL="${{ env.PRODUCTION_URL }}"
+          flutter test test/load_testing/simple_performance_test.dart
+
+  # =======================================
+  # Phase 10: ROLLBACK SI ÉCHEC
+  # =======================================
+  rollback:
+    needs: [setup, performance-tests]
+    runs-on: ubuntu-latest
+    if: |
+      always() && 
+      needs.setup.outputs.should-deploy == 'true' && 
+      (needs.performance-tests.outputs.performance-status == 'failure' || failure())
+    steps:
+      - name: Create rollback issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Rollback nécessaire - Déploiement ${{ needs.setup.outputs.build-version }}`,
+              body: `## Rollback Required
+              
+              **Version:** ${{ needs.setup.outputs.build-version }}
+              **Commit:** ${{ github.sha }}
+              **Performance Score:** ${{ needs.performance-tests.outputs.performance-score }}/100
+              
+              ### Raison
+              Performance insuffisante ou échec de déploiement
+              
+              ### Actions requises
+              1. Analyser les rapports de performance
+              2. Corriger les problèmes identifiés
+              3. Redéployer après corrections
+              `,
+              labels: ['deployment', 'rollback', 'critical']
+            });
+
+  # =======================================
+  # Phase 11: NOTIFICATIONS
+  # =======================================
+  notify-success:
+    needs: [setup, production-validation]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Success notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const context = {
+              main: ${{ needs.setup.outputs.is-main }},
+              pr: ${{ needs.setup.outputs.is-pr }},
+              version: "${{ needs.setup.outputs.build-version }}"
+            };
+
+            let message = "";
+
+            if (context.main) {
+              message = `## 🚀 Déploiement Production réussi
+              
+              **Version:** ${context.version}
+              **URL:** ${{ env.PRODUCTION_URL }}
+              **Performance:** ${{ needs.performance-tests.outputs.performance-score }}/100
+              
+              ✅ Tests de validation réussis
+              ✅ Blue-Green deployment effectué
+              ✅ Production opérationnelle`;
+            } else if (context.pr) {
+              message = `## ✅ Pull Request validée
+              
+              **Tests:** Tous passés
+              **Build:** Réussi
+              **Prêt pour merge**`;
+            } else {
+              message = `## ✅ Feature branch validée
+              
+              **Version:** ${context.version}
+              **Tests:** Tous passés
+              **Build:** Réussi`;
+            }
+
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: message
+            });

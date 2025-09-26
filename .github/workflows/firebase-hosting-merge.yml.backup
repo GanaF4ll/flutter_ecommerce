@@ -1,8 +1,10 @@
-name: CI/CD Pipeline - Format, Test, Build and Deploy
+name: CI/CD - Feature Branches (Format, Test, Build)
 on:
   push:
     branches:
-      - "**" # Toutes les branches pour format, test, build
+      - "!main" # Toutes les branches SAUF main (main géré par blue-green)
+  pull_request:
+    branches: [main]
 
 jobs:
   format:
@@ -85,7 +87,7 @@ jobs:
   deploy:
     needs: [format, test, build]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' # Déploiement seulement sur main
+    if: false # Désactivé - main géré par blue-green-deployment.yml
     steps:
       - name: Checkout
         uses: actions/checkout@v4

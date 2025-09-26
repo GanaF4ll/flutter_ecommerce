@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "flutterecommerce-fc124"
+  },
+  "targets": {
+    "flutterecommerce-fc124": {
+      "hosting": {
+        "production": [
+          "flutterecommerce-fc124"
+        ],
+        "staging": [
+          "flutterecommerce-staging"
+        ]
+      }
+    }
   }
 }

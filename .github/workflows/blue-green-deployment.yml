@@ -1,0 +1,370 @@
+name: Blue-Green Deployment with Performance Testing
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deployment_type:
+        description: "Type de déploiement"
+        required: true
+        default: "blue-green"
+        type: choice
+        options:
+          - blue-green
+          - direct
+          - rollback
+
+env:
+  FIREBASE_PROJECT_ID: flutterecommerce-fc124
+  BLUE_SITE_ID: ${{ vars.FIREBASE_BLUE_SITE_ID || 'flutterecommerce-fc124' }}
+  GREEN_SITE_ID: ${{ vars.FIREBASE_GREEN_SITE_ID || 'flutterecommerce-green' }}
+  PRODUCTION_URL: https://flutterecommerce-fc124.firebaseapp.com
+
+jobs:
+  # Phase 1: Build et tests de base
+  build-and-test:
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate build version
+        id: version
+        run: |
+          VERSION="v$(date +%Y%m%d)-$(echo ${{ github.sha }} | cut -c1-8)"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🏗️ Build version: $VERSION"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test test/entities/ test/guards/ test/load_testing/
+
+      - name: Build web app
+        run: |
+          echo "🏗️ Building version ${{ steps.version.outputs.version }}"
+          flutter build web --release --build-name=${{ steps.version.outputs.version }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build-${{ steps.version.outputs.version }}
+          path: build/web/
+
+  # Phase 2: Déploiement sur l'environnement GREEN (staging)
+  deploy-green:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    outputs:
+      green-url: ${{ steps.deploy.outputs.green_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ needs.build-and-test.outputs.build-version }}
+          path: build/web/
+
+      - name: Deploy to GREEN environment
+        id: deploy
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FLUTTERECOMMERCE_FC124 }}
+          channelId: green-${{ needs.build-and-test.outputs.build-version }}
+          projectId: ${{ env.FIREBASE_PROJECT_ID }}
+          expires: 7d
+
+      - name: Set GREEN URL
+        run: |
+          GREEN_URL="${{ steps.deploy.outputs.details_url }}"
+          echo "GREEN_URL=$GREEN_URL" >> $GITHUB_ENV
+          echo "🟢 GREEN déployé sur: $GREEN_URL"
+
+      - name: Wait for deployment to be ready
+        run: |
+          echo "⏳ Attente que GREEN soit prêt..."
+          sleep 15
+
+          max_attempts=10
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if curl -f --max-time 10 "${{ steps.deploy.outputs.details_url }}" > /dev/null 2>&1; then
+              echo "✅ GREEN accessible"
+              break
+            else
+              echo "⏳ Tentative $attempt/$max_attempts"
+              sleep 10
+              attempt=$((attempt + 1))
+            fi
+          done
+
+  # Phase 3: Tests de performance sur GREEN
+  performance-tests-green:
+    needs: [build-and-test, deploy-green]
+    runs-on: ubuntu-latest
+    outputs:
+      performance-status: ${{ steps.performance.outputs.status }}
+      performance-score: ${{ steps.performance.outputs.score }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Install Artillery
+        run: |
+          curl -sSL https://get.artillery.io | sh
+          echo "$HOME/.artillery/bin" >> $GITHUB_PATH
+
+      - name: Run performance tests on GREEN
+        id: performance
+        run: |
+          GREEN_URL="${{ needs.deploy-green.outputs.green-url }}"
+          echo "🧪 Tests de performance sur GREEN: $GREEN_URL"
+
+          cd load-testing
+          mkdir -p reports
+
+          # Modifier temporairement l'URL cible pour pointer vers GREEN
+          sed "s|https://flutterecommerce-fc124.firebaseapp.com|$GREEN_URL|g" artillery-web-load-test.yml > artillery-green-test.yml
+
+          # Exécuter les tests
+          artillery run artillery-green-test.yml --output reports/green-performance.json || true
+
+          # Tests Flutter natifs (pointer vers GREEN)
+          cd ..
+          export TEST_TARGET_URL="$GREEN_URL"
+          flutter test test/load_testing/simple_performance_test.dart || true
+
+          # Analyser les résultats
+          cd load-testing/reports
+          if [ -f "green-performance.json" ]; then
+            # Calculer un score simple basé sur les métriques
+            SCORE=100
+            
+            if command -v jq > /dev/null; then
+              AVG_TIME=$(jq -r '.aggregate.summaries."http.response_time".mean // 0' green-performance.json)
+              ERROR_RATE=$(jq -r '(.aggregate.counters."http.codes.400" // 0) + (.aggregate.counters."http.codes.500" // 0)' green-performance.json)
+              
+              if (( $(echo "$AVG_TIME > 3000" | bc -l) )); then
+                SCORE=$((SCORE - 30))
+              fi
+              
+              if [ "$ERROR_RATE" -gt 5 ]; then
+                SCORE=$((SCORE - 40))
+              fi
+            fi
+            
+            echo "score=$SCORE" >> $GITHUB_OUTPUT
+            
+            if [ $SCORE -ge 70 ]; then
+              echo "status=success" >> $GITHUB_OUTPUT
+              echo "✅ Performance GREEN acceptable: $SCORE/100"
+            else
+              echo "status=failure" >> $GITHUB_OUTPUT
+              echo "❌ Performance GREEN insuffisante: $SCORE/100"
+            fi
+          else
+            echo "status=unknown" >> $GITHUB_OUTPUT
+            echo "score=0" >> $GITHUB_OUTPUT
+            echo "⚠️ Impossible d'analyser les performances"
+          fi
+
+      - name: Upload GREEN performance reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: green-performance-reports
+          path: load-testing/reports/
+        if: always()
+
+  # Phase 4: Validation et switch BLUE-GREEN
+  blue-green-switch:
+    needs: [build-and-test, deploy-green, performance-tests-green]
+    runs-on: ubuntu-latest
+    if: needs.performance-tests-green.outputs.performance-status == 'success'
+    environment:
+      name: production
+      url: ${{ env.PRODUCTION_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ needs.build-and-test.outputs.build-version }}
+          path: build/web/
+
+      - name: Create deployment backup info
+        run: |
+          mkdir -p deployment-info
+          echo "{
+            \"deployment_id\": \"${{ needs.build-and-test.outputs.build-version }}\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"commit_sha\": \"${{ github.sha }}\",
+            \"green_url\": \"${{ needs.deploy-green.outputs.green-url }}\",
+            \"performance_score\": ${{ needs.performance-tests-green.outputs.performance-score }},
+            \"previous_production\": \"backup-$(date +%Y%m%d-%H%M%S)\"
+          }" > deployment-info/deployment-${{ needs.build-and-test.outputs.build-version }}.json
+
+      - name: Backup current BLUE (production)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FLUTTERECOMMERCE_FC124 }}
+          channelId: backup-$(date +%Y%m%d-%H%M%S)
+          projectId: ${{ env.FIREBASE_PROJECT_ID }}
+          target: ${{ env.BLUE_SITE_ID }}
+        continue-on-error: true
+
+      - name: Deploy to BLUE (production)
+        id: deploy-blue
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FLUTTERECOMMERCE_FC124 }}
+          channelId: live
+          projectId: ${{ env.FIREBASE_PROJECT_ID }}
+
+      - name: Verify production deployment
+        run: |
+          echo "🔍 Vérification du déploiement en production..."
+          sleep 10
+
+          if curl -f --max-time 10 "${{ env.PRODUCTION_URL }}" > /dev/null 2>&1; then
+            echo "✅ Production accessible"
+          else
+            echo "❌ Problème de déploiement production"
+            exit 1
+          fi
+
+      - name: Upload deployment info
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-info-${{ needs.build-and-test.outputs.build-version }}
+          path: deployment-info/
+
+      - name: Cleanup old GREEN channels
+        run: |
+          echo "🧹 Nettoyage des anciens canaux GREEN..."
+          # Cette étape nécessiterait Firebase CLI pour lister et supprimer les anciens canaux
+        continue-on-error: true
+
+  # Phase 5: Tests de validation production
+  production-validation:
+    needs: [build-and-test, blue-green-switch]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Smoke tests production
+        run: |
+          echo "🔥 Tests de validation production..."
+          export TEST_TARGET_URL="${{ env.PRODUCTION_URL }}"
+          flutter test test/load_testing/simple_performance_test.dart
+
+      - name: Post-deployment monitoring
+        run: |
+          echo "📊 Monitoring post-déploiement actif"
+          echo "Version: ${{ needs.build-and-test.outputs.build-version }}"
+          echo "URL: ${{ env.PRODUCTION_URL }}"
+
+  # Phase 6: Rollback en cas d'échec
+  rollback:
+    needs: [build-and-test, deploy-green, performance-tests-green]
+    runs-on: ubuntu-latest
+    if: |
+      always() && 
+      (needs.performance-tests-green.outputs.performance-status == 'failure' ||
+       failure())
+    steps:
+      - name: Notify rollback needed
+        run: |
+          echo "🚨 ROLLBACK NÉCESSAIRE"
+          echo "Raison: Échec des tests de performance ou déploiement"
+          echo "Score performance: ${{ needs.performance-tests-green.outputs.performance-score }}"
+
+      - name: Create rollback issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Rollback nécessaire - Déploiement ${{ needs.build-and-test.outputs.build-version }}`,
+              body: `## Rollback Required
+              
+              **Version:** ${{ needs.build-and-test.outputs.build-version }}
+              **Commit:** ${{ github.sha }}
+              **Performance Score:** ${{ needs.performance-tests-green.outputs.performance-score }}/100
+              
+              ### Raison
+              - Performance insuffisante sur l'environnement GREEN
+              - Score en dessous du seuil de 70/100
+              
+              ### Actions requises
+              1. Analyser les rapports de performance
+              2. Corriger les problèmes identifiés
+              3. Redéployer après corrections
+              
+              ### Artefacts
+              - [Performance Reports](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              `,
+              labels: ['deployment', 'rollback', 'critical']
+            });
+
+  # Notification finale
+  notify-deployment:
+    needs: [build-and-test, production-validation]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Deployment success notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `## 🚀 Déploiement Blue-Green réussi
+              
+              **Version:** ${{ needs.build-and-test.outputs.build-version }}
+              **URL Production:** ${{ env.PRODUCTION_URL }}
+              **Performance Score:** ${{ needs.performance-tests-green.outputs.performance-score }}/100
+              
+              ✅ Tests de validation réussis
+              ✅ Switch Blue-Green effectué
+              ✅ Production opérationnelle
+              `
+            });

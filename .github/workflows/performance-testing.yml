@@ -41,10 +41,10 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Run Flutter native load tests
+      - name: Run Flutter native performance tests
         run: |
           echo "🧪 Tests de performance Flutter natifs"
-          flutter test test/load_testing/flutter_load_test.dart --reporter=expanded
+          flutter test test/load_testing/simple_performance_test.dart --reporter=expanded
         continue-on-error: true
 
       - name: Quick curl performance test
@@ -224,7 +224,7 @@ jobs:
               chmod +x simple-load-test.sh
               ./simple-load-test.sh
               cd ..
-              flutter test test/load_testing/flutter_load_test.dart
+              flutter test test/load_testing/simple_performance_test.dart
               ;;
             "full")
               echo "🚀 Tests complets"

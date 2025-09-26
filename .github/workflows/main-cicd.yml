@@ -435,15 +435,15 @@ jobs:
   # Phase 11: NOTIFICATIONS
   # =======================================
   notify-success:
-    needs: [setup, production-validation]
+    needs: [setup]
     runs-on: ubuntu-latest
-    if: success()
+    if: always() && needs.setup.result == 'success'
     steps:
       - name: Success notification
         uses: actions/github-script@v7
         with:
           script: |
-            const context = {
+            const deploymentContext = {
               main: ${{ needs.setup.outputs.is-main }},
               pr: ${{ needs.setup.outputs.is-pr }},
               version: "${{ needs.setup.outputs.build-version }}"
@@ -451,17 +451,16 @@ jobs:
 
             let message = "";
 
-            if (context.main) {
+            if (deploymentContext.main) {
               message = `## 🚀 Déploiement Production réussi
               
-              **Version:** ${context.version}
+              **Version:** ${deploymentContext.version}
               **URL:** ${{ env.PRODUCTION_URL }}
-              **Performance:** ${{ needs.performance-tests.outputs.performance-score }}/100
               
               ✅ Tests de validation réussis
               ✅ Blue-Green deployment effectué
               ✅ Production opérationnelle`;
-            } else if (context.pr) {
+            } else if (deploymentContext.pr) {
               message = `## ✅ Pull Request validée
               
               **Tests:** Tous passés
@@ -470,7 +469,7 @@ jobs:
             } else {
               message = `## ✅ Feature branch validée
               
-              **Version:** ${context.version}
+              **Version:** ${deploymentContext.version}
               **Tests:** Tous passés
               **Build:** Réussi`;
             }

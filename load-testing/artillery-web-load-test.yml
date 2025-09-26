@@ -1,0 +1,127 @@
+config:
+  target: "https://flutterecommerce-fc124.firebaseapp.com"
+  phases:
+    # Phase de montée en charge graduelle
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up - 5 users/sec"
+    - duration: 120
+      arrivalRate: 10
+      name: "Normal load - 10 users/sec"
+    - duration: 180
+      arrivalRate: 25
+      name: "Peak load - 25 users/sec"
+    - duration: 120
+      arrivalRate: 50
+      name: "Stress load - 50 users/sec"
+    - duration: 60
+      arrivalRate: 5
+      name: "Cool down - 5 users/sec"
+
+  # Configuration pour récolter les métriques détaillées
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+    publish-metrics:
+      type: cloudwatch
+      region: us-east-1
+
+  # Variables globales
+  variables:
+    searchTerms:
+      - "smartphone"
+      - "ordinateur"
+      - "casque"
+      - "montre"
+      - "tablette"
+
+    categories:
+      - "electronique"
+      - "vetements"
+      - "maison"
+      - "sport"
+      - "beaute"
+
+scenarios:
+  # Scénario 1: Navigation utilisateur typique
+  - name: "User Journey - Browse and Shop"
+    weight: 60
+    flow:
+      # Page d'accueil
+      - get:
+          url: "/"
+          name: "Load Homepage"
+          headers:
+            User-Agent: "Artillery Load Test"
+          capture:
+            - json: "$"
+              as: "homepage_data"
+
+      # Catalogue des produits
+      - get:
+          url: "/#/catalog"
+          name: "Load Catalog"
+          headers:
+            User-Agent: "Artillery Load Test"
+
+      # Recherche de produits
+      - get:
+          url: "/#/catalog?search={{ $randomString }}"
+          name: "Search Products"
+
+      # Détail d'un produit
+      - get:
+          url: "/#/product/{{ $randomInt(1, 20) }}"
+          name: "View Product Details"
+
+      # Pause réaliste entre les actions
+      - think: 2
+
+  # Scénario 2: Test de performance de l'authentification
+  - name: "Authentication Flow"
+    weight: 25
+    flow:
+      # Page de connexion
+      - get:
+          url: "/#/login"
+          name: "Load Login Page"
+
+      # Page d'inscription
+      - get:
+          url: "/#/register"
+          name: "Load Register Page"
+
+      - think: 1
+
+  # Scénario 3: Test du panier et favoris
+  - name: "Shopping Cart and Favorites"
+    weight: 15
+    flow:
+      # Page du panier
+      - get:
+          url: "/#/cart"
+          name: "Load Cart Page"
+
+      # Page des favoris
+      - get:
+          url: "/#/favorites"
+          name: "Load Favorites Page"
+
+      # Navigation vers différentes catégories
+      - get:
+          url: "/#/catalog?category=electronique"
+          name: "Browse Category electronique"
+      - think: 1
+      - get:
+          url: "/#/catalog?category=vetements"
+          name: "Browse Category vetements"
+      - think: 1
+      - get:
+          url: "/#/catalog?category=maison"
+          name: "Browse Category maison"
+      - think: 1
+
+# Configuration des métriques et rapports
+after:
+  flow:
+    - log: "Test de charge terminé - Génération du rapport..."

@@ -1,0 +1,104 @@
+config:
+  target: 'https://flutterecommerce-fc124.firebaseapp.com'
+  phases:
+    # Test de stress intense pour identifier les points de rupture
+    - duration: 30
+      arrivalRate: 10
+      name: "Stress Test - Baseline"
+    - duration: 60
+      arrivalRate: 50
+      name: "Stress Test - Moderate"
+    - duration: 90
+      arrivalRate: 100
+      name: "Stress Test - High"
+    - duration: 120
+      arrivalRate: 200
+      name: "Stress Test - Very High"
+    - duration: 60
+      arrivalRate: 500
+      name: "Stress Test - Extreme"
+    - duration: 30
+      arrivalRate: 10
+      name: "Stress Test - Recovery"
+  
+  # Configuration stricte pour détecter les erreurs
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+    expect:
+      outputFormat: 'pretty'
+  
+  # Timeouts plus courts pour détecter rapidement les problèmes
+  timeout: 5
+  
+  defaults:
+    headers:
+      User-Agent: "Artillery Stress Test"
+      Connection: "keep-alive"
+
+scenarios:
+  # Stress test de navigation intense
+  - name: "Intensive Navigation Stress"
+    weight: 40
+    flow:
+      # Accès rapide à différentes pages
+      - get:
+          url: "/"
+          name: "Homepage Stress"
+          expect:
+            - statusCode: [200, 302]
+      
+      - get:
+          url: "/#/catalog"
+          name: "Catalog Stress"
+          expect:
+            - statusCode: [200, 302]
+      
+      - get:
+          url: "/#/product/{{ $randomInt(1, 50) }}"
+          name: "Product Page Stress"
+          expect:
+            - statusCode: [200, 302, 404]
+      
+      # Pas de pause - stress maximum
+  
+  # Stress test de recherche intensive
+  - name: "Search Stress Test"
+    weight: 30
+    flow:
+      - loop:
+          count: 5
+          flow:
+            - get:
+                url: "/#/catalog?search={{ $randomString }}"
+                name: "Random Search Stress"
+                expect:
+                  - statusCode: [200, 302]
+  
+  # Stress test des pages statiques
+  - name: "Static Resources Stress"
+    weight: 30
+    flow:
+      # Test des ressources statiques
+      - get:
+          url: "/favicon.png"
+          name: "Favicon Stress"
+          expect:
+            - statusCode: [200, 404]
+      
+      - get:
+          url: "/manifest.json"
+          name: "Manifest Stress"
+          expect:
+            - statusCode: [200, 404]
+      
+      - get:
+          url: "/flutter.js"
+          name: "Flutter JS Stress"
+          expect:
+            - statusCode: [200, 404]
+
+# Métriques de performance critique à surveiller
+after:
+  flow:
+    - log: "Test de stress terminé - Vérifiez les métriques de performance et d'erreur"

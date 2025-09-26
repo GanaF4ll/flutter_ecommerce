@@ -1,0 +1,85 @@
+config:
+  target: "https://fakestoreapi.com"
+  phases:
+    # Test API externe (FakeStore API)
+    - duration: 30
+      arrivalRate: 2
+      name: "API Warm up"
+    - duration: 60
+      arrivalRate: 5
+      name: "API Normal load"
+    - duration: 90
+      arrivalRate: 10
+      name: "API Heavy load"
+    - duration: 30
+      arrivalRate: 2
+      name: "API Cool down"
+
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+
+  # Headers par défaut
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      User-Agent: "Flutter-Ecommerce-LoadTest"
+
+scenarios:
+  # Test des endpoints API principaux
+  - name: "API Performance Test"
+    weight: 100
+    flow:
+      # Test GET tous les produits
+      - get:
+          url: "/products"
+          name: "Get All Products"
+          expect:
+            - statusCode: 200
+            - contentType: json
+          capture:
+            - json: "$[0].id"
+              as: "first_product_id"
+
+      # Test GET produit spécifique
+      - get:
+          url: "/products/{{ $randomInt(1, 20) }}"
+          name: "Get Single Product"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+      # Test GET catégories
+      - get:
+          url: "/products/categories"
+          name: "Get Categories"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+      # Test GET produits par catégorie
+      - get:
+          url: "/products/category/electronics"
+          name: "Get Products by Category"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+      # Test avec limite
+      - get:
+          url: "/products?limit=5"
+          name: "Get Limited Products"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+      # Test avec tri
+      - get:
+          url: "/products?sort=desc"
+          name: "Get Sorted Products"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+      # Pause entre les requêtes
+      - think: 1

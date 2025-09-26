@@ -1,0 +1,89 @@
+config:
+  target: 'https://identitytoolkit.googleapis.com'
+  phases:
+    # Test de montée en charge Firebase Auth
+    - duration: 30
+      arrivalRate: 1
+      name: "Firebase Auth Warm up"
+    - duration: 60
+      arrivalRate: 3
+      name: "Firebase Auth Normal"
+    - duration: 60
+      arrivalRate: 7
+      name: "Firebase Auth Peak"
+    - duration: 30
+      arrivalRate: 1
+      name: "Firebase Auth Cool down"
+  
+  variables:
+    api_key: "AIzaSyAH-3PYZI9QL8TsojvBqg4MACQjE4W1DlQ"
+    # Emails de test (utiliser des emails de test uniquement)
+    test_emails:
+      - "test1@loadtest.com"
+      - "test2@loadtest.com"
+      - "test3@loadtest.com"
+      - "test4@loadtest.com"
+      - "test5@loadtest.com"
+  
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      User-Agent: "Flutter-Ecommerce-LoadTest"
+
+scenarios:
+  # Test de création de compte (limité pour éviter le spam)
+  - name: "Firebase Auth Registration"
+    weight: 20
+    flow:
+      - post:
+          url: "/v1/accounts:signUp?key={{ api_key }}"
+          name: "Create Account"
+          json:
+            email: "loadtest{{ $randomInt(1000, 9999) }}@temp.com"
+            password: "TestPassword123!"
+            returnSecureToken: true
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "$.idToken"
+              as: "id_token"
+            - json: "$.refreshToken" 
+              as: "refresh_token"
+      
+      - think: 2
+
+  # Test de connexion
+  - name: "Firebase Auth Login"
+    weight: 60
+    flow:
+      - post:
+          url: "/v1/accounts:signInWithPassword?key={{ api_key }}"
+          name: "Sign In"
+          json:
+            email: "{{ $pick(test_emails) }}"
+            password: "TestPassword123!"
+            returnSecureToken: true
+          expect:
+            - statusCode: [200, 400] # 400 pour comptes inexistants, normal en test
+          capture:
+            - json: "$.idToken"
+              as: "id_token"
+              ifExists: true
+      
+      - think: 1
+
+  # Test de refresh token
+  - name: "Firebase Token Refresh"
+    weight: 20
+    flow:
+      # Simuler le refresh de token
+      - post:
+          url: "/v1/token?key={{ api_key }}"
+          name: "Refresh Token"
+          json:
+            grant_type: "refresh_token"
+            refresh_token: "dummy_refresh_token_for_test"
+          expect:
+            - statusCode: [200, 400] # 400 attendu avec dummy token
+      
+      - think: 1

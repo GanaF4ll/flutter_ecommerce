@@ -1,0 +1,225 @@
+name: Performance Quality Gates
+
+on:
+  workflow_run:
+    workflows: ["Performance Testing CI/CD"]
+    types:
+      - completed
+
+jobs:
+  performance-gates:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download performance artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: performance-reports-web-load
+          path: ./performance-reports/
+        continue-on-error: true
+
+      - name: Install jq for JSON parsing
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Analyze performance metrics
+        id: analyze
+        run: |
+          cd performance-reports
+
+          # Variables pour stocker les résultats
+          PERFORMANCE_SCORE=100
+          ISSUES=""
+
+          # Analyser les rapports JSON
+          for json_file in *.json; do
+            if [ -f "$json_file" ]; then
+              echo "📊 Analyse de $json_file"
+              
+              # Extraire les métriques
+              TOTAL_REQUESTS=$(jq -r '.aggregate.counters."http.requests" // 0' "$json_file")
+              AVG_RESPONSE_TIME=$(jq -r '.aggregate.summaries."http.response_time".mean // 0' "$json_file")
+              P95_RESPONSE_TIME=$(jq -r '.aggregate.summaries."http.response_time".p95 // 0' "$json_file")
+              ERROR_RATE=$(jq -r '(.aggregate.counters."http.codes.400" // 0) + (.aggregate.counters."http.codes.500" // 0)' "$json_file")
+              SUCCESS_REQUESTS=$(jq -r '.aggregate.counters."http.codes.200" // 0' "$json_file")
+              
+              echo "Requêtes totales: $TOTAL_REQUESTS"
+              echo "Temps de réponse moyen: ${AVG_RESPONSE_TIME}ms"
+              echo "P95: ${P95_RESPONSE_TIME}ms"
+              echo "Requêtes réussies: $SUCCESS_REQUESTS"
+              echo "Erreurs: $ERROR_RATE"
+              
+              # Quality Gates
+              # 1. Temps de réponse moyen < 2000ms
+              if (( $(echo "$AVG_RESPONSE_TIME > 2000" | bc -l) )); then
+                PERFORMANCE_SCORE=$((PERFORMANCE_SCORE - 20))
+                ISSUES="$ISSUES\n❌ Temps de réponse moyen trop élevé: ${AVG_RESPONSE_TIME}ms (seuil: 2000ms)"
+              fi
+              
+              # 2. P95 < 5000ms
+              if (( $(echo "$P95_RESPONSE_TIME > 5000" | bc -l) )); then
+                PERFORMANCE_SCORE=$((PERFORMANCE_SCORE - 15))
+                ISSUES="$ISSUES\n❌ P95 trop élevé: ${P95_RESPONSE_TIME}ms (seuil: 5000ms)"
+              fi
+              
+              # 3. Taux d'erreur < 5%
+              if [ "$TOTAL_REQUESTS" -gt 0 ]; then
+                ERROR_PERCENTAGE=$(echo "scale=2; $ERROR_RATE * 100 / $TOTAL_REQUESTS" | bc)
+                if (( $(echo "$ERROR_PERCENTAGE > 5" | bc -l) )); then
+                  PERFORMANCE_SCORE=$((PERFORMANCE_SCORE - 25))
+                  ISSUES="$ISSUES\n❌ Taux d'erreur trop élevé: ${ERROR_PERCENTAGE}% (seuil: 5%)"
+                fi
+              fi
+              
+              # 4. Minimum de requêtes réussies
+              if [ "$SUCCESS_REQUESTS" -lt 10 ]; then
+                PERFORMANCE_SCORE=$((PERFORMANCE_SCORE - 30))
+                ISSUES="$ISSUES\n❌ Pas assez de requêtes réussies: $SUCCESS_REQUESTS (minimum: 10)"
+              fi
+            fi
+          done
+
+          # Résumé final
+          echo "PERFORMANCE_SCORE=$PERFORMANCE_SCORE" >> $GITHUB_OUTPUT
+          echo -e "ISSUES=$ISSUES" >> $GITHUB_OUTPUT
+
+          echo "📊 Score de performance final: $PERFORMANCE_SCORE/100"
+
+          if [ $PERFORMANCE_SCORE -ge 80 ]; then
+            echo "STATUS=success" >> $GITHUB_OUTPUT
+            echo "✅ Performance acceptable"
+          elif [ $PERFORMANCE_SCORE -ge 60 ]; then
+            echo "STATUS=warning" >> $GITHUB_OUTPUT
+            echo "⚠️ Performance dégradée"
+          else
+            echo "STATUS=failure" >> $GITHUB_OUTPUT
+            echo "❌ Performance critique"
+          fi
+
+      - name: Create performance badge
+        run: |
+          mkdir -p .github/badges
+          SCORE="${{ steps.analyze.outputs.PERFORMANCE_SCORE }}"
+
+          if [ $SCORE -ge 80 ]; then
+            COLOR="green"
+            STATUS="excellent"
+          elif [ $SCORE -ge 60 ]; then
+            COLOR="yellow"
+            STATUS="degraded"
+          else
+            COLOR="red"
+            STATUS="critical"
+          fi
+
+          # Créer un badge SVG simple
+          cat > .github/badges/performance.svg << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
+            <linearGradient id="b" x2="0" y2="100%">
+              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+              <stop offset="1" stop-opacity=".1"/>
+            </linearGradient>
+            <mask id="a">
+              <rect width="120" height="20" rx="3" fill="#fff"/>
+            </mask>
+            <g mask="url(#a)">
+              <path fill="#555" d="M0 0h75v20H0z"/>
+              <path fill="$COLOR" d="M75 0h45v20H75z"/>
+              <path fill="url(#b)" d="M0 0h120v20H0z"/>
+            </g>
+            <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+              <text x="37.5" y="15" fill="#010101" fill-opacity=".3">Performance</text>
+              <text x="37.5" y="14">Performance</text>
+              <text x="97.5" y="15" fill="#010101" fill-opacity=".3">$SCORE/100</text>
+              <text x="97.5" y="14">$SCORE/100</text>
+            </g>
+          </svg>
+          EOF
+
+      - name: Update README with performance status
+        run: |
+          SCORE="${{ steps.analyze.outputs.PERFORMANCE_SCORE }}"
+          STATUS="${{ steps.analyze.outputs.STATUS }}"
+          TIMESTAMP=$(date -u)
+
+          # Créer ou mettre à jour la section performance dans le README
+          if ! grep -q "## 📊 Performance Status" README.md; then
+            cat >> README.md << EOF
+
+          ## 📊 Performance Status
+
+          ![Performance Badge](.github/badges/performance.svg)
+
+          **Dernière évaluation:** $TIMESTAMP  
+          **Score:** $SCORE/100  
+          **Statut:** $STATUS  
+
+          ### Métriques surveillées
+          - ⏱️ Temps de réponse moyen < 2s
+          - 📈 P95 < 5s
+          - ❌ Taux d'erreur < 5%
+          - ✅ Disponibilité > 95%
+
+          EOF
+          fi
+
+      - name: Comment on commit with performance results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const score = "${{ steps.analyze.outputs.PERFORMANCE_SCORE }}";
+            const status = "${{ steps.analyze.outputs.STATUS }}";
+            const issues = `${{ steps.analyze.outputs.ISSUES }}`;
+
+            let emoji = "✅";
+            let statusText = "Performance OK";
+
+            if (status === "warning") {
+              emoji = "⚠️";
+              statusText = "Performance dégradée";
+            } else if (status === "failure") {
+              emoji = "❌";
+              statusText = "Performance critique";
+            }
+
+            const body = `## ${emoji} Évaluation Performance
+
+            **Score:** ${score}/100  
+            **Statut:** ${statusText}
+
+            ${issues ? '### ⚠️ Problèmes détectés:\n' + issues : '### ✅ Tous les seuils respectés'}
+
+            ### 📊 Seuils de qualité
+            - Temps de réponse moyen < 2000ms
+            - P95 < 5000ms  
+            - Taux d'erreur < 5%
+            - Minimum 10 requêtes réussies
+
+            📁 [Rapports détaillés dans les artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+
+            // Créer un commentaire sur le commit
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: body
+            });
+
+      - name: Fail if performance is critical
+        if: steps.analyze.outputs.STATUS == 'failure'
+        run: |
+          echo "❌ Performance critique détectée!"
+          echo "Score: ${{ steps.analyze.outputs.PERFORMANCE_SCORE }}/100"
+          echo "Problèmes:"
+          echo -e "${{ steps.analyze.outputs.ISSUES }}"
+          exit 1
+
+      - name: Performance summary
+        run: |
+          echo "🎯 === RÉSUMÉ PERFORMANCE ==="
+          echo "Score: ${{ steps.analyze.outputs.PERFORMANCE_SCORE }}/100"
+          echo "Statut: ${{ steps.analyze.outputs.STATUS }}"
+          echo "=========================="

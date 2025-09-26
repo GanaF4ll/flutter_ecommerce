@@ -1,0 +1,265 @@
+name: Performance Testing CI/CD
+
+on:
+  # Déclencher sur les PRs vers main
+  pull_request:
+    branches: [main]
+  # Déclencher après un déploiement sur main
+  workflow_run:
+    workflows: ["CI/CD Pipeline - Format, Test, Build and Deploy"]
+    types:
+      - completed
+    branches: [main]
+  # Permettre le déclenchement manuel
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: "Type de test de performance"
+        required: true
+        default: "light"
+        type: choice
+        options:
+          - light
+          - full
+          - stress
+
+jobs:
+  # Tests de performance légers sur les PRs
+  performance-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Run Flutter native load tests
+        run: |
+          echo "🧪 Tests de performance Flutter natifs"
+          flutter test test/load_testing/flutter_load_test.dart --reporter=expanded
+        continue-on-error: true
+
+      - name: Quick curl performance test
+        run: |
+          echo "🚀 Test rapide avec curl"
+          cd load-testing
+          chmod +x simple-load-test.sh
+          timeout 120s ./simple-load-test.sh || echo "Test terminé avec timeout"
+        continue-on-error: true
+
+      - name: Upload performance reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports-pr
+          path: load-testing/reports/
+        if: always()
+
+  # Tests complets après déploiement
+  performance-full:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+    strategy:
+      matrix:
+        test_type: [web-load, api-load, stress]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Artillery
+        run: |
+          curl -sSL https://get.artillery.io | sh
+          echo "$HOME/.artillery/bin" >> $GITHUB_PATH
+
+      - name: Wait for deployment to be ready
+        run: |
+          echo "⏳ Attente que le déploiement soit prêt..."
+          sleep 30
+
+          # Vérifier que l'application répond
+          max_attempts=10
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if curl -f --max-time 10 https://flutterecommerce-fc124.firebaseapp.com/ > /dev/null 2>&1; then
+              echo "✅ Application accessible"
+              break
+            else
+              echo "⏳ Tentative $attempt/$max_attempts - Application non disponible"
+              sleep 15
+              attempt=$((attempt + 1))
+            fi
+          done
+
+      - name: Run Artillery tests - ${{ matrix.test_type }}
+        run: |
+          cd load-testing
+          mkdir -p reports
+
+          case "${{ matrix.test_type }}" in
+            "web-load")
+              echo "🌐 Test de charge web"
+              artillery run artillery-web-load-test.yml --output reports/web-load-$(date +%s).json
+              ;;
+            "api-load")
+              echo "🔌 Test de charge API"
+              artillery run artillery-api-load-test.yml --output reports/api-load-$(date +%s).json
+              ;;
+            "stress")
+              echo "⚡ Test de stress"
+              artillery run artillery-stress-test.yml --output reports/stress-test-$(date +%s).json
+              ;;
+          esac
+        continue-on-error: true
+        timeout-minutes: 15
+
+      - name: Generate HTML reports
+        run: |
+          cd load-testing/reports
+          for json_file in *.json; do
+            if [ -f "$json_file" ]; then
+              echo "📊 Génération du rapport pour $json_file"
+              artillery report "$json_file" --output "${json_file%.json}.html" || echo "Erreur génération rapport"
+            fi
+          done
+        continue-on-error: true
+
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports-${{ matrix.test_type }}
+          path: load-testing/reports/
+        if: always()
+
+      - name: Performance analysis
+        run: |
+          cd load-testing/reports
+          echo "📊 === ANALYSE DES PERFORMANCES ===" > performance-summary.txt
+          echo "Test: ${{ matrix.test_type }}" >> performance-summary.txt
+          echo "Date: $(date)" >> performance-summary.txt
+          echo "Commit: ${{ github.sha }}" >> performance-summary.txt
+          echo "" >> performance-summary.txt
+
+          # Analyser les fichiers JSON s'ils existent
+          for json_file in *.json; do
+            if [ -f "$json_file" ]; then
+              echo "=== Résultats $json_file ===" >> performance-summary.txt
+              
+              # Extraire les métriques clés avec jq si disponible
+              if command -v jq > /dev/null; then
+                echo "Requêtes totales: $(jq -r '.aggregate.counters."http.requests" // "N/A"' "$json_file")" >> performance-summary.txt
+                echo "Temps moyen: $(jq -r '.aggregate.summaries."http.response_time".mean // "N/A"' "$json_file")ms" >> performance-summary.txt
+                echo "P95: $(jq -r '.aggregate.summaries."http.response_time".p95 // "N/A"' "$json_file")ms" >> performance-summary.txt
+                echo "Erreurs: $(jq -r '.aggregate.counters."http.codes.200" // "N/A"' "$json_file")" >> performance-summary.txt
+              else
+                echo "Fichier présent: $json_file" >> performance-summary.txt
+              fi
+              echo "" >> performance-summary.txt
+            fi
+          done
+
+          cat performance-summary.txt
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'load-testing/reports/performance-summary.txt';
+
+            if (fs.existsSync(path)) {
+              const summary = fs.readFileSync(path, 'utf8');
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 📊 Résultats des tests de performance\n\n\`\`\`\n${summary}\n\`\`\`\n\n📁 Rapports détaillés disponibles dans les artifacts.`
+              });
+            }
+
+  # Tests manuels avec choix du type
+  performance-manual:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install testing tools
+        run: |
+          if [ "${{ github.event.inputs.test_type }}" != "light" ]; then
+            curl -sSL https://get.artillery.io | sh
+            echo "$HOME/.artillery/bin" >> $GITHUB_PATH
+          fi
+
+      - name: Setup Flutter (if light test)
+        if: github.event.inputs.test_type == 'light'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get (if light test)
+        if: github.event.inputs.test_type == 'light'
+        run: flutter pub get
+
+      - name: Run selected performance tests
+        run: |
+          cd load-testing
+          mkdir -p reports
+
+          case "${{ github.event.inputs.test_type }}" in
+            "light")
+              echo "🧪 Tests légers"
+              chmod +x simple-load-test.sh
+              ./simple-load-test.sh
+              cd ..
+              flutter test test/load_testing/flutter_load_test.dart
+              ;;
+            "full")
+              echo "🚀 Tests complets"
+              artillery run artillery-web-load-test.yml --output reports/full-test-$(date +%s).json
+              artillery run artillery-api-load-test.yml --output reports/api-test-$(date +%s).json
+              ;;
+            "stress")
+              echo "⚡ Tests de stress"
+              artillery run artillery-stress-test.yml --output reports/stress-test-$(date +%s).json
+              ;;
+          esac
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results-manual-${{ github.event.inputs.test_type }}
+          path: load-testing/reports/
+        if: always()
+
+  # Notification des résultats
+  notify-results:
+    needs: [performance-full]
+    runs-on: ubuntu-latest
+    if: always() && (needs.performance-full.result == 'success' || needs.performance-full.result == 'failure')
+
+    steps:
+      - name: Performance test summary
+        run: |
+          echo "🎯 Tests de performance terminés"
+          echo "Statut: ${{ needs.performance-full.result }}"
+          echo "Commit: ${{ github.sha }}"
+
+          if [ "${{ needs.performance-full.result }}" = "failure" ]; then
+            echo "⚠️ Certains tests de performance ont échoué"
+            echo "Vérifiez les artifacts pour plus de détails"
+          else
+            echo "✅ Tous les tests de performance ont réussi"
+          fi

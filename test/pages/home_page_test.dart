@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ecommerce/pages/home_page.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../mocks/mock_auth_guard.dart';
 
 void main() {
   group('HomePage Tests', () {
     Widget createWidgetUnderTest() {
-      return const MaterialApp(
-        home: HomePage(),
-      );
+      return createTestWidgetWithMockAuth(const HomePage());
     }
 
     testWidgets('should build without crashing', (WidgetTester tester) async {
